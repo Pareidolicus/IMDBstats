@@ -36,14 +36,10 @@ class ClearApplyButtonsPanel(wx.Panel):
         self.appliedClicked = True
         event.Skip()
 
-    # def OnButton(self, event):
-    #     print('button clicked')
-    #     event.Skip()
-
 
 class ListSelectionPanel(wx.Panel):
     """
-        Panel for selection of element in list (desplegable).
+        Panel for selection of element in list (dropdown).
         For example for selection of set movies, series or videogames
     """
 
@@ -58,9 +54,8 @@ class ListSelectionPanel(wx.Panel):
                                value='Movies',
                                choices=inputList,
                                style=wx.CB_DROPDOWN
-                               | wx.CB_READONLY
-                               | wx.CB_SORT,
-                               )
+                                    | wx.CB_READONLY
+                                    )
 
         # sizers
         panelSizer = wx.BoxSizer(wx.VERTICAL)

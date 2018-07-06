@@ -2,6 +2,7 @@ from __future__ import division
 import csv
 from copy import deepcopy
 
+
 class MovieManagerClass(object):
     def __init__(self):
         self.meta = []
@@ -13,23 +14,23 @@ class MovieManagerClass(object):
         self.allTitles = {'movies': [], 'series': [], 'videogames': []}
         self.filterParams = {}
 
-    def Latin1ToUnicodeDictReader(self, latin1_data, **kwargs):
-        csv_reader = csv.DictReader(latin1_data, **kwargs)
-        self.meta = csv_reader.fieldnames
+    def Latin1ToUnicodeDictReader(self, csv_reader):
         for row in csv_reader:
-            yield {key: value.decode('latin-1').encode('utf8') if value else value for key, value in row.iteritems()}
+            yield {key: row[key].decode('latin-1').encode('utf8') if row[key] else row[key] for key in row}
 
     def readFile(self, csvFile):
         with open(csvFile, 'rb') as inFile:
-            reader = self.Latin1ToUnicodeDictReader(inFile, delimiter=',')
+            csv_reader = csv.DictReader(inFile, delimiter=',')
+            self.meta = csv_reader.fieldnames
+            self.meta.append('Active')
             typesMoviesSet = {'video', 'movie', 'tvMovie'}
             typesSeriesSet = {'tvSeries', 'tvEpisode'}
             typesVideogamesSet = {'videoGame'}
-
-            self.meta.append('Active')
             self.filterParams = {'movies': {self.meta[i]: [] for i in range(len(self.meta))},
                                  'series': {self.meta[i]: [] for i in range(len(self.meta))},
                                  'videogames': {self.meta[i]: [] for i in range(len(self.meta))}}
+
+            reader = self.Latin1ToUnicodeDictReader(csv_reader)
             for title in reader:
                 title.update({'Active': True})
                 title['Genres'] = set(title['Genres'].split(', '))
@@ -63,6 +64,8 @@ class MovieManagerClass(object):
         """
         for f in self.meta:
             self.switchFilterParam(setName, f, False)
+        for title in self.allTitles[setName]:
+            title['Active'] = True
 
     def applyFilter(self, setName):
         """
