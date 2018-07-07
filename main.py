@@ -23,8 +23,8 @@ class MainWindow(wx.Frame):
 
         # Menu and status bar
         self.initMenu()
-        self.CreateStatusBar()
-        self.GetStatusBar().SetFieldsCount(2, [self.filterPanel.Size[0], -1])
+        self.CreateStatusBar(2)
+        self.SetStatusWidths([self.filterPanel.Size[0], -1])
 
     def initControls(self):
         # panels and control items
@@ -33,6 +33,8 @@ class MainWindow(wx.Frame):
                                                            ['Movies', 'Series', 'Videogames'],
                                                            'Set')
         self.filterSetSelection.Disable()
+        self.filterYourRateSelection = fPnls.SpinCtrlPanel(self.filterPanel, 0.0, 10.0, 'Your Rating')
+        self.filterYourRateSelection.Disable()
         self.clearApplyButtons = fPnls.ClearApplyButtonsPanel(self.filterPanel)
         self.clearApplyButtons.Disable()
         self.infoNb = wx.Notebook(self)
@@ -64,11 +66,11 @@ class MainWindow(wx.Frame):
 
     def initSizers(self):
         filterParamsSizer = wx.BoxSizer(wx.VERTICAL)
-        filterParamsSizer.Add(self.filterSetSelection, 0, wx.ALIGN_TOP)
-        #filterParamsSizer.Add(self.filterTitleYourRate, 0, wx.ALIGN_TOP)
+        filterParamsSizer.Add(self.filterSetSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add(self.filterYourRateSelection, 0, wx.EXPAND)
         filterSizer = wx.BoxSizer(wx.VERTICAL)
         filterSizer.Add(filterParamsSizer, 1, wx.EXPAND)
-        filterSizer.Add(self. clearApplyButtons, 0, wx.ALIGN_BOTTOM)
+        filterSizer.Add(self. clearApplyButtons, 0, wx.EXPAND)
         self.filterPanel.SetSizer(filterSizer)
 
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -144,6 +146,7 @@ class MainWindow(wx.Frame):
             # enable controls
             self.clearApplyButtons.Enable()
             self.filterSetSelection.Enable()
+            self.filterYourRateSelection.Enable()
             self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
         dlg.Destroy()
 
@@ -156,6 +159,7 @@ class MainWindow(wx.Frame):
         # disable controls
         self.clearApplyButtons.Disable()
         self.filterSetSelection.Disable()
+        self.filterYourRateSelection.Disable()
         self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
         # clear data
         self.myTitles.clearFilter(self.currentSet)
@@ -169,7 +173,7 @@ class MainWindow(wx.Frame):
 
     def OnAbout(self, event):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
-        dlg = wx.MessageDialog(self, "About IMDBstats\n\nA program that computes statistics from your movies rated on IMDB.com\n\nCreated by Diego Ruiz", "About IMDB statistics", wx.OK)
+        dlg = wx.MessageDialog(self, "About IMDBstats\n\nA program that computes statistics from your movies rated on IMDB.com\n\nCreated by Diego Ruiz\n", "About IMDB statistics", wx.OK)
         dlg.ShowModal()  # Show it
         dlg.Destroy()  # finally destroy it when finished.
 
