@@ -17,7 +17,7 @@ class MainWindow(wx.Frame):
         self.activeTitles = []
         self.currentSet = 'movies'
 
-        # init windows, controls and sizers
+        # init controls and sizers
         self.initControls()
         self.initSizers()
 
@@ -28,15 +28,7 @@ class MainWindow(wx.Frame):
 
     def initControls(self):
         # panels and control items
-        self.filterPanel = wx.Panel(self)
-        self.filterSetSelection = fPnls.ListSelectionPanel(self.filterPanel,
-                                                           ['Movies', 'Series', 'Videogames'],
-                                                           'Set')
-        self.filterSetSelection.Disable()
-        self.filterYourRateSelection = fPnls.SpinCtrlPanel(self.filterPanel, 0.0, 10.0, 'Your Rating')
-        self.filterYourRateSelection.Disable()
-        self.clearApplyButtons = fPnls.ClearApplyButtonsPanel(self.filterPanel)
-        self.clearApplyButtons.Disable()
+        self.filterPanel = fPnls.MainFilterPanel(self)
         self.infoNb = wx.Notebook(self)
         self.objectList = ObjectListView(self.infoNb,
                                          style=wx.LC_REPORT | wx.LC_VRULES | wx.LC_HRULES,
@@ -61,18 +53,10 @@ class MainWindow(wx.Frame):
 
         # set Control events
         self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumn, self.objectList)
-        self.clearApplyButtons.Bind(wx.EVT_BUTTON, self.OnCAButton)
-        self.filterSetSelection.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
+        self.Bind(wx.EVT_BUTTON, self.OnCAButton)
+        self.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
 
     def initSizers(self):
-        filterParamsSizer = wx.BoxSizer(wx.VERTICAL)
-        filterParamsSizer.Add(self.filterSetSelection, 0, wx.EXPAND)
-        filterParamsSizer.Add(self.filterYourRateSelection, 0, wx.EXPAND)
-        filterSizer = wx.BoxSizer(wx.VERTICAL)
-        filterSizer.Add(filterParamsSizer, 1, wx.EXPAND)
-        filterSizer.Add(self. clearApplyButtons, 0, wx.EXPAND)
-        self.filterPanel.SetSizer(filterSizer)
-
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
         mainSizer.Add(self.filterPanel, 0, wx.EXPAND)
         mainSizer.Add(self.infoNb, 1, wx.EXPAND)
@@ -105,22 +89,25 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
     def OnSetSelection(self, event):
-        if self.filterSetSelection.selectedItem == 0:
-            self.OnSetMovies(None)
-        elif self.filterSetSelection.selectedItem == 1:
-            self.OnSetSeries(None)
-        elif self.filterSetSelection.selectedItem == 2:
-            self.OnSetVideogames(None)
+        titles = ['Movies', 'Series', 'Videogames']
+        sets = ['movies', 'series', 'videogames']
+        sel = self.filterPanel.selectedSet
+
+        self.SetTitle("IMDB statistics - " + titles[sel])
+        self.currentSet = sets[sel]
+        self.SetStatusText('Showing ' + sets[sel])
+        self.updateListView()
 
     def OnCAButton(self, event):
-        if self.clearApplyButtons.clearClicked:
+        if self.filterPanel.clearClicked:
             self.SetStatusText('Filter cleared')
             self.myTitles.clearFilter(self.currentSet)
-        elif self.clearApplyButtons.appliedClicked:
+            self.filterPanel.clearProps()
+        elif self.filterPanel.appliedClicked:
             self.SetStatusText('Filter applied')
+            self.myTitles.setFilterParam(self.currentSet, 'Your Rating', self.filterPanel.selectedYourRate)
             self.myTitles.applyFilter(self.currentSet)
-        self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
-        self.objectList.SetObjects(self.activeTitles)
+        self.updateListView()
 
     def OnColumn(self, event):
         self.SetStatusText('Sorted by ' + self.myColumns[event.GetColumn()].title)
@@ -135,18 +122,15 @@ class MainWindow(wx.Frame):
             self.dirname = dlg.GetDirectory()
             self.myTitles.readFile(os.path.join(self.dirname, self.filename))
             # update list
-            self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
-            self.objectList.SetObjects(self.activeTitles)
+            self.updateListView()
             self.objectList.SetEmptyListMsg("No titles to show")
             self.objectList.SortBy(1)
             # set status info
             self.SetStatusText('File ' + self.filename + ' opened')
-            self.SetStatusText(str(len(self.activeTitles)) + ' ' + self.currentSet, 1)
             self.fileIsOpen = True
             # enable controls
-            self.clearApplyButtons.Enable()
-            self.filterSetSelection.Enable()
-            self.filterYourRateSelection.Enable()
+            self.filterPanel.EnableFilter(True)
+            self.filterPanel.setFilterFields(self.myTitles.meta)
             self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
         dlg.Destroy()
 
@@ -154,19 +138,17 @@ class MainWindow(wx.Frame):
         """ Close current file """
         # set status info
         self.SetStatusText('File closed')
-        self.SetStatusText('', 1)
         self.fileIsOpen = False
         # disable controls
-        self.clearApplyButtons.Disable()
-        self.filterSetSelection.Disable()
-        self.filterYourRateSelection.Disable()
+        self.filterPanel.EnableFilter(False)
         self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
         # clear data
+        self.filterPanel.clearProps()
         self.myTitles.clearFilter(self.currentSet)
         self.myTitles.clearProps()
-        self.activeTitles = []
-        self.objectList.SetObjects(self.activeTitles)
         self.objectList.SetEmptyListMsg("Open .csv file\n(Ctrl+O)")
+        # update list view
+        self.updateListView(True)
 
     def OnExit(self, event):
         self.Close(True)
@@ -177,30 +159,17 @@ class MainWindow(wx.Frame):
         dlg.ShowModal()  # Show it
         dlg.Destroy()  # finally destroy it when finished.
 
-    def OnSetMovies(self, event):
-        self.SetTitle("IMDB statistics - Movies")
-        self.currentSet = 'movies'
-        self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
+    def updateListView(self, clear=False):
+        if clear:
+            self.activeTitles = []
+            self.SetStatusText('', 1)
+        else:
+            tempText = ' '
+            self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
+            if self.currentSet == 1:
+                tempText = '/episodes'
+            self.SetStatusText(str(len(self.activeTitles)) + ' ' + self.currentSet + tempText, 1)
         self.objectList.SetObjects(self.activeTitles)
-        self.SetStatusText('Showing movies')
-        self.SetStatusText(str(len(self.activeTitles)) + ' movies', 1)
-
-    def OnSetSeries(self, event):
-        self.SetTitle("IMDB statistics - Series")
-        self.currentSet = 'series'
-        self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
-        self.objectList.SetObjects(self.activeTitles)
-        self.SetStatusText('Showing series')
-        self.SetStatusText(str(len(self.activeTitles)) + ' series/episodes', 1)
-
-    def OnSetVideogames(self, event):
-        self.SetTitle("IMDB statistics - Videogames")
-        self.currentSet = 'videogames'
-        self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
-        self.objectList.SetObjects(self.activeTitles)
-        self.SetStatusText('Showing videogames')
-        self.SetStatusText(str(len(self.activeTitles)) + ' videogames', 1)
-
 
 if __name__ == '__main__':
 

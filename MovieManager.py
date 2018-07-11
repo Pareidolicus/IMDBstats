@@ -134,7 +134,7 @@ class MovieManagerClass(object):
                                                       self.maxValueForField(setName, field)]
                 return True
             else:
-                # if all values are non, field can't be activated
+                # if all values are none, field can't be activated
                 self.filterParams[setName][field] = []
                 return False
         elif field in {'Genres', 'Directors', 'Title Type'}:
@@ -142,6 +142,9 @@ class MovieManagerClass(object):
             for title in self.allTitles[setName]:
                 self.filterParams[setName][field] |= title[field]
             return True
+
+    def setFilterParam(self, setName, field, value):
+        self.filterParams[setName][field] = value
 
     def minValueForField(self, setName, field):
         return min(x[field] for x in self.allTitles[setName] if x is not None)
