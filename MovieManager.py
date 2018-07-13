@@ -8,11 +8,13 @@ class MovieManagerClass(object):
         self.meta = []
         self.allTitles = {'movies': [], 'series': [], 'videogames': []}
         self.filterParams = {}
+        self.filterRanges = {}
 
     def clearProps(self):
         self.meta = []
         self.allTitles = {'movies': [], 'series': [], 'videogames': []}
         self.filterParams = {}
+        self.filterRanges = {}
 
     def Latin1ToUnicodeDictReader(self, csv_reader):
         for row in csv_reader:
@@ -49,11 +51,22 @@ class MovieManagerClass(object):
                     title['Runtime (mins)'] = int(title['Runtime (mins)'])
 
                 if title['Title Type'] in typesMoviesSet:
+                    title['Title Type'] = set(title['Title Type'].split(', '))
                     self.allTitles['movies'].append(title)
                 elif title['Title Type'] in typesSeriesSet:
+                    title['Title Type'] = set(title['Title Type'].split(', '))
                     self.allTitles['series'].append(title)
                 elif title['Title Type'] in typesVideogamesSet:
+                    title['Title Type'] = set(title['Title Type'].split(', '))
                     self.allTitles['videogames'].append(title)
+
+        self.filterRanges = {'movies': {self.meta[i]: [] for i in range(len(self.meta))},
+                             'series': {self.meta[i]: [] for i in range(len(self.meta))},
+                             'videogames': {self.meta[i]: [] for i in range(len(self.meta))}}
+        self.initFilterRanges('movies')
+        self.initFilterRanges('series')
+        self.initFilterRanges('videogames')
+
 
     def clearFilter(self, setName):
         """
@@ -107,6 +120,30 @@ class MovieManagerClass(object):
                 output.append(outTitle)
         return output
 
+    def initFilterRanges(self, setName):
+        """
+         Initialize min and max possible values for some filter parameters.
+
+        :param setName: name of set (series, movies or videogames)
+        :return:
+        """
+
+        for field in {'Your Rating', 'IMDb Rating'}:
+            self.filterRanges[setName][field] = [0, 10]
+        for field in {'Date Rated', 'Release Date', 'Runtime (mins)', 'Num Votes'}:
+            tempList = [x[field] for x in self.allTitles[setName]]
+            # check if all values in field are None
+            if tempList.count(None) is not len(tempList):
+                self.filterRanges[setName][field] = [self.minValueForField(setName, field),
+                                                     self.maxValueForField(setName, field)]
+            else:
+                self.filterRanges[setName][field] = []
+        for field in {'Genres', 'Directors', 'Title Type'}:
+            self.filterRanges[setName][field] = set()
+            for title in self.allTitles[setName]:
+                self.filterRanges[setName][field] |= title[field]
+
+
     def switchFilterParam(self, setName, field, activate):
         """
         This function activates or deactivates a parameter in search filter,
@@ -124,27 +161,26 @@ class MovieManagerClass(object):
             self.filterParams[setName][field] = []
             return True
         if field in {'Your Rating', 'IMDb Rating'}:
-            self.filterParams[setName][field] += [0, 10]
+            self.filterParams[setName][field] += self.filterRanges[setName][field]
             return True
         elif field in {'Date Rated', 'Release Date', 'Runtime (mins)', 'Num Votes'}:
             tempList = [x[field] for x in self.allTitles[setName]]
             # check if all values in field are None
             if tempList.count(None) is not len(tempList):
-                self.filterParams[setName][field] += [self.minValueForField(setName, field),
-                                                      self.maxValueForField(setName, field)]
+                self.filterParams[setName][field] += self.filterRanges[setName][field]
                 return True
             else:
                 # if all values are none, field can't be activated
                 self.filterParams[setName][field] = []
                 return False
         elif field in {'Genres', 'Directors', 'Title Type'}:
-            self.filterParams[setName][field] = set()
-            for title in self.allTitles[setName]:
-                self.filterParams[setName][field] |= title[field]
+            self.filterParams[setName][field] = self.filterRanges[setName][field]
             return True
+        else:
+            print('switchFilterParam: field not allowed')
 
-    def setFilterParam(self, setName, field, value):
-        self.filterParams[setName][field] = value
+    def setFilterParams(self, setName, filter):
+        self.filterParams[setName] = filter[setName]
 
     def minValueForField(self, setName, field):
         return min(x[field] for x in self.allTitles[setName] if x is not None)

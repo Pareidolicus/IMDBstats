@@ -102,10 +102,10 @@ class MainWindow(wx.Frame):
         if self.filterPanel.clearClicked:
             self.SetStatusText('Filter cleared')
             self.myTitles.clearFilter(self.currentSet)
-            self.filterPanel.clearProps()
+            self.filterPanel.setFilterParams(self.myTitles.filterParams)
         elif self.filterPanel.appliedClicked:
             self.SetStatusText('Filter applied')
-            self.myTitles.setFilterParam(self.currentSet, 'Your Rating', self.filterPanel.selectedYourRate)
+            self.myTitles.setFilterParams(self.currentSet, self.filterPanel.filterParams)
             self.myTitles.applyFilter(self.currentSet)
         self.updateListView()
 
@@ -129,8 +129,13 @@ class MainWindow(wx.Frame):
             self.SetStatusText('File ' + self.filename + ' opened')
             self.fileIsOpen = True
             # enable controls
+            ###FOR TEST ONLY
+            self.myTitles.switchFilterParam('movies', 'Runtime (mins)', True)
+            self.myTitles.switchFilterParam('series', 'Runtime (mins)', True)
+            ###
             self.filterPanel.EnableFilter(True)
-            self.filterPanel.setFilterFields(self.myTitles.meta)
+            self.filterPanel.setFilterRanges(self.myTitles.filterRanges)
+            self.filterPanel.setFilterParams(self.myTitles.filterParams)
             self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
         dlg.Destroy()
 
