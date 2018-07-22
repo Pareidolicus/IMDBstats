@@ -39,8 +39,12 @@ class MainFilterPanel(wx.Panel):
         self.clearApplyButtons.Bind(wx.EVT_BUTTON, self.OnCAButton)
         self.filterSetSelection.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
         self.filterYourRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnYourRateSelection)
+        self.filterYourRateSelection.Bind(wx.EVT_CHECKBOX, self.OnYourRateSelectionCheckBox)
         self.filterIMDBRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnIMDBRateSelection)
+        self.filterIMDBRateSelection.Bind(wx.EVT_CHECKBOX, self.filterIMDBRateSelectionCheckBox)
         self.filterRuntimeSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnRuntimeSelection)
+        self.filterRuntimeSelection.Bind(wx.EVT_CHECKBOX, self.filterRuntimeSelectionCheckBox)
+
 
     def OnCAButton(self, event):
         self.clearClicked = self.clearApplyButtons.clearClicked
@@ -57,19 +61,37 @@ class MainFilterPanel(wx.Panel):
         setName = self.setNames[self.selectedSet]
         self.filterParams[setName]['Your Rating'] = [self.filterYourRateSelection.selectedValueMin,
                                                      self.filterYourRateSelection.selectedValueMax]
-        event.Skip()
+
+    def OnYourRateSelectionCheckBox(self, event):
+        setName = self.setNames[self.selectedSet]
+        if self.filterYourRateSelection.isActive:
+            self.filterParams[setName]['Your Rating'] = self.filterRanges[setName]['Your Rating']
+        else:
+            self.filterParams[setName]['Your Rating'] = []
 
     def OnIMDBRateSelection(self, event):
         setName = self.setNames[self.selectedSet]
         self.filterParams[setName]['IMDb Rating'] = [self.filterIMDBRateSelection.selectedValueMin,
                                                      self.filterIMDBRateSelection.selectedValueMax]
-        event.Skip()
+
+    def filterIMDBRateSelectionCheckBox(self, event):
+        setName = self.setNames[self.selectedSet]
+        if self.filterIMDBRateSelection.isActive:
+            self.filterParams[setName]['IMDb Rating'] = self.filterRanges[setName]['IMDb Rating']
+        else:
+            self.filterParams[setName]['IMDb Rating'] = []
 
     def OnRuntimeSelection(self, event):
         setName = self.setNames[self.selectedSet]
         self.filterParams[setName]['Runtime (mins)'] = [self.filterRuntimeSelection.selectedValueMin,
                                                         self.filterRuntimeSelection.selectedValueMax]
-        event.Skip()
+
+    def filterRuntimeSelectionCheckBox(self, event):
+        setName = self.setNames[self.selectedSet]
+        if self.filterRuntimeSelection.isActive:
+            self.filterParams[setName]['Runtime (mins)'] = self.filterRanges[setName]['Runtime (mins)']
+        else:
+            self.filterParams[setName]['Runtime (mins)'] = []
 
     def EnableFilter(self, enable):
         """
@@ -96,11 +118,7 @@ class MainFilterPanel(wx.Panel):
 
     def updateFilterRanges(self, setName):
         runtimeRange = self.filterRanges[setName]['Runtime (mins)']
-        if runtimeRange:
-            self.filterRuntimeSelection.spinCtrlMin.SetRange(runtimeRange[0],
-                                                             runtimeRange[1])
-            self.filterRuntimeSelection.spinCtrlMax.SetRange(runtimeRange[0],
-                                                             runtimeRange[1])
+        self.filterRuntimeSelection.SetSpinSelectorRanges(runtimeRange)
 
     def clearProps(self):
         self.appliedClicked = False
@@ -118,11 +136,13 @@ class MainFilterPanel(wx.Panel):
         self.filterRuntimeSelection.SetCurrentValues(self.filterParams[setName]['Runtime (mins)'])
 
     def resetFilter(self):
-        self.filterYourRateSelection.SetCurrentValues([0, 10])
-        self.filterIMDBRateSelection.SetCurrentValues([0, 10])
-        self.filterRuntimeSelection.spinCtrlMin.SetRange(0, 100)
-        self.filterRuntimeSelection.spinCtrlMax.SetRange(0, 100)
-        self.filterRuntimeSelection.SetCurrentValues([0, 100])
+        self.filterYourRateSelection. SetSpinSelectorRanges([0, 10])
+        self.filterYourRateSelection.SetCurrentValues([])
+        self.filterIMDBRateSelection.SetSpinSelectorRanges([0, 10])
+        self.filterIMDBRateSelection.SetCurrentValues([])
+        self.filterRuntimeSelection.SetSpinSelectorRanges([0, 100])
+        self.filterRuntimeSelection.SetCurrentValues([])
+
 
 class ClearApplyButtonsPanel(wx.Panel):
     """
@@ -239,13 +259,13 @@ class MinMaxSpinCtrlPanel(wx.Panel):
 
         self.selectedValueMin = minValue
         self.selectedValueMax = maxValue
+        self.isActive = False
 
         # controls
-        staticTitle = wx.StaticText(self, -1, title)
+        self.checkBox = wx.CheckBox(self, -1, title)
         staticMinText = wx.StaticText(self, -1, 'Min: ')
         staticMaxText = wx.StaticText(self, -1, 'Max: ')
         spinPanelStyle = wx.SP_ARROW_KEYS | wx.SP_VERTICAL
-
         self.spinCtrlMin = wx.SpinCtrlDouble(self,
                                              value="",
                                              size=(60, -1),
@@ -255,6 +275,7 @@ class MinMaxSpinCtrlPanel(wx.Panel):
                                              initial=self.selectedValueMin,
                                              inc=inc
                                              )
+        self.spinCtrlMin.Disable()
         self.spinCtrlMax = wx.SpinCtrlDouble(self,
                                              value="",
                                              size=(60, -1),
@@ -264,6 +285,7 @@ class MinMaxSpinCtrlPanel(wx.Panel):
                                              initial=self.selectedValueMax,
                                              inc=inc
                                              )
+        self.spinCtrlMax.Disable()
         self.Disable()
 
         # sizers
@@ -273,13 +295,14 @@ class MinMaxSpinCtrlPanel(wx.Panel):
         spinCtrlsSizer.Add(staticMaxText, 0, wx.EXPAND)
         spinCtrlsSizer.Add(self.spinCtrlMax, 0, wx.EXPAND)
         panelSizer = wx.BoxSizer(wx.VERTICAL)
-        panelSizer.Add(staticTitle, 0, wx.ALIGN_CENTER)
+        panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
         panelSizer.Add(spinCtrlsSizer, 0, wx.ALIGN_CENTER)
         self.SetSizer(panelSizer)
 
         # events
         self.spinCtrlMin.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnSpinSelectorMin)
         self.spinCtrlMax.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnSpinSelectorMax)
+        self.checkBox.Bind(wx.EVT_CHECKBOX, self.OnCheckBox)
 
     def OnSpinSelectorMin(self, event):
         self.selectedValueMin = self.spinCtrlMin.GetValue()
@@ -295,10 +318,40 @@ class MinMaxSpinCtrlPanel(wx.Panel):
             self.spinCtrlMax.SetValue(self.selectedValueMax)
         event.Skip()
 
+    def OnCheckBox(self, event):
+        self.isActive = not self.isActive
+        self.enableSpinSelectors(self.isActive)
+        if not self.isActive:
+            self.SetCurrentValues([])
+        event.Skip()
+
     def SetCurrentValues(self, values):
         if values:
-            self.spinCtrlMin.SetValue(values[0])
-            self.spinCtrlMax.SetValue(values[1])
+            if not self.isActive:
+                # it should be enabled!
+                self.isActive = True
+                self.checkBox.SetValue(self.isActive)
+                self.enableSpinSelectors(self.isActive)
+            self.selectedValueMin = values[0]
+            self.selectedValueMax = values[1]
         else:
-            self.spinCtrlMin.SetValue(self.spinCtrlMin.GetRange()[0])
-            self.spinCtrlMax.SetValue(self.spinCtrlMin.GetRange()[1])
+            if self.isActive:
+                # it should be disabled!
+                self.isActive = False
+                self.checkBox.SetValue(self.isActive)
+                self.enableSpinSelectors(self.isActive)
+            self.selectedValueMin = self.spinCtrlMin.GetRange()[0]
+            self.selectedValueMax = self.spinCtrlMin.GetRange()[1]
+        self.spinCtrlMin.SetValue(self.selectedValueMin)
+        self.spinCtrlMax.SetValue(self.selectedValueMax)
+
+    def SetSpinSelectorRanges(self, ranges):
+        if ranges:
+            self.spinCtrlMin.SetRange(ranges[0],
+                                      ranges[1])
+            self.spinCtrlMax.SetRange(ranges[0],
+                                      ranges[1])
+
+    def enableSpinSelectors(self, enable):
+        self.spinCtrlMin.Enable(enable)
+        self.spinCtrlMax.Enable(enable)

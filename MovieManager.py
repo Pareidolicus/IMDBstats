@@ -143,7 +143,6 @@ class MovieManagerClass(object):
             for title in self.allTitles[setName]:
                 self.filterRanges[setName][field] |= title[field]
 
-
     def switchFilterParam(self, setName, field, activate):
         """
         This function activates or deactivates a parameter in search filter,
@@ -179,8 +178,14 @@ class MovieManagerClass(object):
         else:
             print('switchFilterParam: field not allowed')
 
-    def setFilterParams(self, setName, filter):
-        self.filterParams[setName] = filter[setName]
+    def setFilterParams(self, setName, filterPanelParams):
+        for field in filterPanelParams:
+            if (not filterPanelParams[field]) and self.filterParams[setName][field]:
+                self.switchFilterParam(setName, field, False)
+            elif filterPanelParams[field] and (not self.filterParams[setName][field]):
+                self.switchFilterParam(setName, field, True)
+            else:
+                self.filterParams[setName][field] = filterPanelParams[field]
 
     def minValueForField(self, setName, field):
         return min(x[field] for x in self.allTitles[setName] if x is not None)

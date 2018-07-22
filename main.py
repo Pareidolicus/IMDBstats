@@ -102,11 +102,11 @@ class MainWindow(wx.Frame):
         if self.filterPanel.clearClicked:
             self.SetStatusText('Filter cleared')
             self.myTitles.clearFilter(self.currentSet)
-            self.filterPanel.setFilterParams(self.myTitles.filterParams)
         elif self.filterPanel.appliedClicked:
             self.SetStatusText('Filter applied')
-            self.myTitles.setFilterParams(self.currentSet, self.filterPanel.filterParams)
+            self.myTitles.setFilterParams(self.currentSet, self.filterPanel.filterParams[self.currentSet])
             self.myTitles.applyFilter(self.currentSet)
+        self.filterPanel.setFilterParams(self.myTitles.filterParams)
         self.updateListView()
 
     def OnColumn(self, event):
@@ -128,11 +128,6 @@ class MainWindow(wx.Frame):
             # set status info
             self.SetStatusText('File ' + self.filename + ' opened')
             self.fileIsOpen = True
-            # enable controls
-            ###FOR TEST ONLY
-            self.myTitles.switchFilterParam('movies', 'Runtime (mins)', True)
-            self.myTitles.switchFilterParam('series', 'Runtime (mins)', True)
-            ###
             self.filterPanel.EnableFilter(True)
             self.filterPanel.setFilterRanges(self.myTitles.filterRanges)
             self.filterPanel.setFilterParams(self.myTitles.filterParams)
@@ -171,7 +166,7 @@ class MainWindow(wx.Frame):
         else:
             tempText = ' '
             self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
-            if self.currentSet == 1:
+            if self.currentSet == 'series':
                 tempText = '/episodes'
             self.SetStatusText(str(len(self.activeTitles)) + ' ' + self.currentSet + tempText, 1)
         self.objectList.SetObjects(self.activeTitles)
