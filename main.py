@@ -160,8 +160,7 @@ class MainWindow(wx.Frame):
 
     def setActiveTitles(self, custom=False):
         if custom:
-            selectedObjects = self.infoNb.objectList.GetSelectedObjects()
-            self.activeTitles = selectedObjects
+            self.activeTitles = self.infoNb.objectList.GetSelectedObjects()
         else:
             self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
 

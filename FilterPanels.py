@@ -1,4 +1,5 @@
 import wx
+import wx.lib.scrolledpanel as scrolled
 
 
 class MainFilterPanel(wx.Panel):
@@ -14,12 +15,14 @@ class MainFilterPanel(wx.Panel):
         self.filterRanges = {}
 
         # controls
-        self.filterSetSelection = ListSelectionPanel(self,
+        self.scrollPanel = scrolled.ScrolledPanel(self)
+        self.scrollPanel.SetupScrolling(scroll_x=False)
+        self.filterSetSelection = ListSelectionPanel(self.scrollPanel,
                                                      ['Movies', 'Series', 'Videogames'],
                                                      'Set')
-        self.filterYourRateSelection = MinMaxSpinCtrlPanel(self, 0.0, 10.0, 0.1, 'Your Rating')
-        self.filterIMDBRateSelection = MinMaxSpinCtrlPanel(self, 0.0, 10.0, 0.1, 'IMDB Rating')
-        self.filterRuntimeSelection = MinMaxSpinCtrlPanel(self, 0, 100, 1, 'Runtime (min)')
+        self.filterYourRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 'Your Rating')
+        self.filterIMDBRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 'IMDB Rating')
+        self.filterRuntimeSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100, 1, 'Runtime (min)')
         self.clearApplyButtons = ClearApplyButtonsPanel(self)
         self.customListButton = wx.Button(self, -1, "Custom List")
         self.customListButton.Disable()
@@ -30,10 +33,11 @@ class MainFilterPanel(wx.Panel):
         filterParamsSizer.Add(self.filterYourRateSelection, 0, wx.EXPAND)
         filterParamsSizer.Add(self.filterIMDBRateSelection, 0, wx.EXPAND)
         filterParamsSizer.Add(self.filterRuntimeSelection, 0, wx.EXPAND)
+        self.scrollPanel.SetSizer(filterParamsSizer)
         filterSizer = wx.BoxSizer(wx.VERTICAL)
-        filterSizer.Add(filterParamsSizer, 1, wx.EXPAND)
+        filterSizer.Add(self.scrollPanel, 1, wx.EXPAND)
         filterSizer.Add(self.customListButton, 0, wx.EXPAND)
-        filterSizer.Add(self. clearApplyButtons, 0, wx.EXPAND)
+        filterSizer.Add(self.clearApplyButtons, 0, wx.EXPAND)
         self.SetSizer(filterSizer)
 
         # events

@@ -18,9 +18,7 @@ class MainInfoPanel(wx.Notebook):
 
 
 class ObjectListClass(ObjectListView):
-    """
 
-    """
     def __init__(self, parent):
         super(ObjectListClass, self).__init__(parent,
                                               style=wx.LC_REPORT | wx.LC_VRULES | wx.LC_HRULES,
