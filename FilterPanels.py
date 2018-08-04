@@ -8,8 +8,6 @@ class MainFilterPanel(wx.Panel):
     def __init__(self, parent):
         super(MainFilterPanel, self).__init__(parent)
 
-        self.appliedClicked = False
-        self.clearClicked = False
         self.selectedSet = 0
         self.setNames = ['movies', 'series', 'videogames']
         self.filterParams = {}
@@ -23,6 +21,8 @@ class MainFilterPanel(wx.Panel):
         self.filterIMDBRateSelection = MinMaxSpinCtrlPanel(self, 0.0, 10.0, 0.1, 'IMDB Rating')
         self.filterRuntimeSelection = MinMaxSpinCtrlPanel(self, 0, 100, 1, 'Runtime (min)')
         self.clearApplyButtons = ClearApplyButtonsPanel(self)
+        self.customListButton = wx.Button(self, -1, "Custom List")
+        self.customListButton.Disable()
 
         # sizers
         filterParamsSizer = wx.BoxSizer(wx.VERTICAL)
@@ -32,11 +32,11 @@ class MainFilterPanel(wx.Panel):
         filterParamsSizer.Add(self.filterRuntimeSelection, 0, wx.EXPAND)
         filterSizer = wx.BoxSizer(wx.VERTICAL)
         filterSizer.Add(filterParamsSizer, 1, wx.EXPAND)
+        filterSizer.Add(self.customListButton, 0, wx.EXPAND)
         filterSizer.Add(self. clearApplyButtons, 0, wx.EXPAND)
         self.SetSizer(filterSizer)
 
         # events
-        self.clearApplyButtons.Bind(wx.EVT_BUTTON, self.OnCAButton)
         self.filterSetSelection.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
         self.filterYourRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnYourRateSelection)
         self.filterYourRateSelection.Bind(wx.EVT_CHECKBOX, self.OnYourRateSelectionCheckBox)
@@ -44,12 +44,6 @@ class MainFilterPanel(wx.Panel):
         self.filterIMDBRateSelection.Bind(wx.EVT_CHECKBOX, self.filterIMDBRateSelectionCheckBox)
         self.filterRuntimeSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnRuntimeSelection)
         self.filterRuntimeSelection.Bind(wx.EVT_CHECKBOX, self.filterRuntimeSelectionCheckBox)
-
-
-    def OnCAButton(self, event):
-        self.clearClicked = self.clearApplyButtons.clearClicked
-        self.appliedClicked = self.clearApplyButtons.appliedClicked
-        event.Skip()
 
     def OnSetSelection(self, event):
         self.selectedSet = self.filterSetSelection.selectedItem
@@ -102,6 +96,7 @@ class MainFilterPanel(wx.Panel):
         :return:
         """
         self.clearApplyButtons.Enable(enable)
+        self.customListButton.Enable(enable)
         self.filterSetSelection.Enable(enable)
         self.filterYourRateSelection.Enable(enable)
         self.filterIMDBRateSelection.Enable(enable)
@@ -121,8 +116,6 @@ class MainFilterPanel(wx.Panel):
         self.filterRuntimeSelection.SetSpinSelectorRanges(runtimeRange)
 
     def clearProps(self):
-        self.appliedClicked = False
-        self.clearClicked = False
         self.selectedSet = 0
         self.filterParams = {}
         self.filterRanges = {}
@@ -152,9 +145,6 @@ class ClearApplyButtonsPanel(wx.Panel):
     def __init__(self, parent):
         super(ClearApplyButtonsPanel, self).__init__(parent)
 
-        self.appliedClicked = True
-        self.clearClicked = False
-
         # controls
         Applybutton = wx.Button(self, -1, "Apply")
         Clearbutton = wx.Button(self, -1, "Clear")
@@ -165,20 +155,6 @@ class ClearApplyButtonsPanel(wx.Panel):
         filterButtonsSizer.Add(Clearbutton, 1, wx.EXPAND)
         filterButtonsSizer.Add(Applybutton, 1, wx.EXPAND)
         self.SetSizer(filterButtonsSizer)
-
-        # events
-        Applybutton.Bind(wx.EVT_BUTTON, self.OnApply)
-        Clearbutton.Bind(wx.EVT_BUTTON, self.OnClear)
-
-    def OnClear(self, event):
-        self.clearClicked = True
-        self.appliedClicked = False
-        event.Skip()
-
-    def OnApply(self, event):
-        self.clearClicked = False
-        self.appliedClicked = True
-        event.Skip()
 
 
 class ListSelectionPanel(wx.Panel):

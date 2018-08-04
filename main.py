@@ -2,8 +2,8 @@
 import wx
 import MovieManager as movMng
 import FilterPanels as fPnls
+import InfoPanels as infoPnls
 import os
-from ObjectListView import ObjectListView, ColumnDefn
 
 class MainWindow(wx.Frame):
     def __init__(self, parent, title):
@@ -29,32 +29,12 @@ class MainWindow(wx.Frame):
     def initControls(self):
         # panels and control items
         self.filterPanel = fPnls.MainFilterPanel(self)
-        self.infoNb = wx.Notebook(self)
-        self.objectList = ObjectListView(self.infoNb,
-                                         style=wx.LC_REPORT | wx.LC_VRULES | wx.LC_HRULES,
-                                         cellEditMode="CELLEDIT_NONE",
-                                         useAlternateBackColors=False)
-        self.objectList.SetEmptyListMsg("Open .csv file\n(Ctrl+O)")
-        self.myColumns = [
-            ColumnDefn(title="Year", align="center", valueGetter="Year", isEditable=False, fixedWidth=75),
-            ColumnDefn(title="Title", width=250, valueGetter="Title", isEditable=False, minimumWidth=200, isSearchable=True),
-            ColumnDefn(title="IMDb Rating", align="center", valueGetter="IMDb Rating", isEditable=False, fixedWidth=125),
-            ColumnDefn(title="Your Rating", align="center", valueGetter="Your Rating", isEditable=False, fixedWidth=125),
-            ColumnDefn(title="Date Rated", align="center", valueGetter="Date Rated", isEditable=False, fixedWidth=125),
-            ColumnDefn(title="Genres", width=250, valueGetter="Genres", minimumWidth=100, isEditable=False),
-            ColumnDefn(title="Directors", width=250, valueGetter="Directors", minimumWidth=100, isEditable=False),
-            ColumnDefn(title="Num Votes", valueGetter="Num Votes", isEditable=False, fixedWidth=125),
-            ColumnDefn(title="Runtime (min.)", valueGetter="Runtime (mins)", isEditable=False, fixedWidth=150)
-        ]
-        self.objectList.SetColumns(self.myColumns)
-        self.infoNb.AddPage(self.objectList, "List")
-        self.infoNb.AddPage(wx.Panel(self.infoNb), "Graphs")
-        #infoNb.AddPage(wx.Panel(infoNb), "Records")
+        self.infoNb = infoPnls.MainInfoPanel(self)
 
         # set Control events
-        self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumn, self.objectList)
-        self.Bind(wx.EVT_BUTTON, self.OnCAButton)
+        self.Bind(wx.EVT_BUTTON, self.OnButton)
         self.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
+        self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumn)
 
     def initSizers(self):
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -96,22 +76,18 @@ class MainWindow(wx.Frame):
         self.SetTitle("IMDB statistics - " + titles[sel])
         self.currentSet = sets[sel]
         self.SetStatusText('Showing ' + sets[sel])
+        self.setActiveTitles()
         self.updateListView()
 
-    def OnCAButton(self, event):
-        if self.filterPanel.clearClicked:
-            self.SetStatusText('Filter cleared')
-            self.myTitles.clearFilter(self.currentSet)
-        elif self.filterPanel.appliedClicked:
-            self.SetStatusText('Filter applied')
-            self.myTitles.setFilterParams(self.currentSet, self.filterPanel.filterParams[self.currentSet])
-            self.myTitles.applyFilter(self.currentSet)
-        self.filterPanel.setFilterParams(self.myTitles.filterParams)
-        self.updateListView()
+    def OnButton(self, event):
+        label = event.GetEventObject().GetLabel()
+        if label in {'Clear', 'Apply'}:
+            self.CAButtonClicked(label)
+        if label == 'Custom List':
+            self.createCustomList()
 
     def OnColumn(self, event):
-        self.SetStatusText('Sorted by ' + self.myColumns[event.GetColumn()].title)
-        return
+        self.SetStatusText('Sorted by ' + self.infoNb.objectList.TitleColumnSelected)
 
     def OnOpen(self, event):
         """ Open a file """
@@ -122,9 +98,10 @@ class MainWindow(wx.Frame):
             self.dirname = dlg.GetDirectory()
             self.myTitles.readFile(os.path.join(self.dirname, self.filename))
             # update list
+            self.setActiveTitles()
             self.updateListView()
-            self.objectList.SetEmptyListMsg("No titles to show")
-            self.objectList.SortBy(1)
+            self.infoNb.objectList.SetEmptyListMsg("No titles to show")
+            self.infoNb.objectList.SortBy(1)
             # set status info
             self.SetStatusText('File ' + self.filename + ' opened')
             self.fileIsOpen = True
@@ -146,8 +123,9 @@ class MainWindow(wx.Frame):
         self.filterPanel.clearProps()
         self.myTitles.clearFilter(self.currentSet)
         self.myTitles.clearProps()
-        self.objectList.SetEmptyListMsg("Open .csv file\n(Ctrl+O)")
+        self.infoNb.objectList.SetEmptyListMsg("Open .csv file\n(Ctrl+O)")
         # update list view
+        self.activeTitles = []
         self.updateListView(True)
 
     def OnExit(self, event):
@@ -159,17 +137,47 @@ class MainWindow(wx.Frame):
         dlg.ShowModal()  # Show it
         dlg.Destroy()  # finally destroy it when finished.
 
-    def updateListView(self, clear=False):
-        if clear:
-            self.activeTitles = []
+    def createCustomList(self):
+        numSelected = self.infoNb.objectList.GetSelectedItemCount()
+        if numSelected == 0:
+            self.SetStatusText('No titles selected')
+            return
+        self.setActiveTitles(True)
+        self.updateListView()
+        self.SetStatusText('Custom List Created')
+
+    def CAButtonClicked(self, label):
+        if label == 'Clear':
+            self.SetStatusText('Filter cleared')
+            self.myTitles.clearFilter(self.currentSet)
+        elif label == 'Apply':
+            self.SetStatusText('Filter applied')
+            self.myTitles.setFilterParams(self.currentSet, self.filterPanel.filterParams[self.currentSet])
+            self.myTitles.applyFilter(self.currentSet)
+        self.filterPanel.setFilterParams(self.myTitles.filterParams)
+        self.setActiveTitles()
+        self.updateListView()
+
+    def setActiveTitles(self, custom=False):
+        if custom:
+            selectedObjects = self.infoNb.objectList.GetSelectedObjects()
+            self.activeTitles = selectedObjects
+        else:
+            self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
+
+    def updateListView(self, close=False):
+        if close:
             self.SetStatusText('', 1)
         else:
-            tempText = ' '
-            self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
-            if self.currentSet == 'series':
-                tempText = '/episodes'
-            self.SetStatusText(str(len(self.activeTitles)) + ' ' + self.currentSet + tempText, 1)
-        self.objectList.SetObjects(self.activeTitles)
+            self.updateStatusListText()
+        self.infoNb.objectList.SetObjects(self.activeTitles)
+
+    def updateStatusListText(self):
+        tempText = ' '
+        if self.currentSet == 'series':
+            tempText = '/episodes'
+        self.SetStatusText(str(len(self.activeTitles)) + ' ' + self.currentSet + tempText, 1)
+
 
 if __name__ == '__main__':
 
