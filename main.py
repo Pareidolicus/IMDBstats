@@ -5,6 +5,7 @@ import FilterPanels as fPnls
 import InfoPanels as infoPnls
 import os
 
+
 class MainWindow(wx.Frame):
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title=title, size=(1000, 750))

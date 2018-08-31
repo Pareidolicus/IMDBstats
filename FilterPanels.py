@@ -1,5 +1,6 @@
 import wx
 import wx.lib.scrolledpanel as scrolled
+import wx.adv
 
 
 class MainFilterPanel(wx.Panel):
@@ -9,6 +10,7 @@ class MainFilterPanel(wx.Panel):
     def __init__(self, parent):
         super(MainFilterPanel, self).__init__(parent)
 
+        vert_spacer = 15
         self.selectedSet = 0
         self.setNames = ['movies', 'series', 'videogames']
         self.filterParams = {}
@@ -20,9 +22,12 @@ class MainFilterPanel(wx.Panel):
         self.filterSetSelection = ListSelectionPanel(self.scrollPanel,
                                                      ['Movies', 'Series', 'Videogames'],
                                                      'Set')
-        self.filterYourRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 'Your Rating')
-        self.filterIMDBRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 'IMDB Rating')
-        self.filterRuntimeSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100, 1, 'Runtime (min)')
+        self.filterYourRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 90, 'Your Rating')
+        self.filterIMDBRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 90, 'IMDB Rating')
+        self.filterRuntimeSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100, 1, 90, 'Runtime (min)')
+        self.filterNumVotesSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100000, 500, 90, 'Num. Votes')
+        self.filterDateReleaseSelection = MinMaxDateCtrlPanel(self.scrollPanel, '1900-01-01', '2100-01-01', -1, 'Release Date')
+        self.filterDateRatedSelection = MinMaxDateCtrlPanel(self.scrollPanel, '1900-01-01', '2100-01-01', -1, 'Date Rated')
         self.clearApplyButtons = ClearApplyButtonsPanel(self)
         self.customListButton = wx.Button(self, -1, "Custom List")
         self.customListButton.Disable()
@@ -30,9 +35,20 @@ class MainFilterPanel(wx.Panel):
         # sizers
         filterParamsSizer = wx.BoxSizer(wx.VERTICAL)
         filterParamsSizer.Add(self.filterSetSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add((0, vert_spacer))
         filterParamsSizer.Add(self.filterYourRateSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add((0, vert_spacer))
         filterParamsSizer.Add(self.filterIMDBRateSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add((0, vert_spacer))
         filterParamsSizer.Add(self.filterRuntimeSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add((0, vert_spacer))
+        filterParamsSizer.Add(self.filterNumVotesSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add((0, vert_spacer))
+        filterParamsSizer.Add(self.filterDateReleaseSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add((0, vert_spacer))
+        filterParamsSizer.Add(self.filterDateRatedSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add((0, vert_spacer))
+
         self.scrollPanel.SetSizer(filterParamsSizer)
         filterSizer = wx.BoxSizer(wx.VERTICAL)
         filterSizer.Add(self.scrollPanel, 1, wx.EXPAND)
@@ -45,9 +61,15 @@ class MainFilterPanel(wx.Panel):
         self.filterYourRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnYourRateSelection)
         self.filterYourRateSelection.Bind(wx.EVT_CHECKBOX, self.OnYourRateSelectionCheckBox)
         self.filterIMDBRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnIMDBRateSelection)
-        self.filterIMDBRateSelection.Bind(wx.EVT_CHECKBOX, self.filterIMDBRateSelectionCheckBox)
+        self.filterIMDBRateSelection.Bind(wx.EVT_CHECKBOX, self.OnIMDBRateSelectionCheckBox)
         self.filterRuntimeSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnRuntimeSelection)
-        self.filterRuntimeSelection.Bind(wx.EVT_CHECKBOX, self.filterRuntimeSelectionCheckBox)
+        self.filterRuntimeSelection.Bind(wx.EVT_CHECKBOX, self.OnRuntimeSelectionCheckBox)
+        self.filterNumVotesSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnNumVotesSelection)
+        self.filterNumVotesSelection.Bind(wx.EVT_CHECKBOX, self.OnNumVotesSelectionCheckBox)
+        self.filterDateReleaseSelection.Bind(wx.adv.EVT_DATE_CHANGED, self.OnDateReleaseSelection)
+        self.filterDateReleaseSelection.Bind(wx.EVT_CHECKBOX, self.OnDateReleaseSelectionCheckBox)
+        self.filterDateRatedSelection.Bind(wx.adv.EVT_DATE_CHANGED, self.OnDateRatedSelection)
+        self.filterDateRatedSelection.Bind(wx.EVT_CHECKBOX, self.OnDateRatedSelectionCheckBox)
 
     def OnSetSelection(self, event):
         self.selectedSet = self.filterSetSelection.selectedItem
@@ -72,7 +94,7 @@ class MainFilterPanel(wx.Panel):
         self.filterParams[setName]['IMDb Rating'] = [self.filterIMDBRateSelection.selectedValueMin,
                                                      self.filterIMDBRateSelection.selectedValueMax]
 
-    def filterIMDBRateSelectionCheckBox(self, event):
+    def OnIMDBRateSelectionCheckBox(self, event):
         setName = self.setNames[self.selectedSet]
         if self.filterIMDBRateSelection.isActive:
             self.filterParams[setName]['IMDb Rating'] = self.filterRanges[setName]['IMDb Rating']
@@ -84,12 +106,48 @@ class MainFilterPanel(wx.Panel):
         self.filterParams[setName]['Runtime (mins)'] = [self.filterRuntimeSelection.selectedValueMin,
                                                         self.filterRuntimeSelection.selectedValueMax]
 
-    def filterRuntimeSelectionCheckBox(self, event):
+    def OnRuntimeSelectionCheckBox(self, event):
         setName = self.setNames[self.selectedSet]
         if self.filterRuntimeSelection.isActive:
             self.filterParams[setName]['Runtime (mins)'] = self.filterRanges[setName]['Runtime (mins)']
         else:
             self.filterParams[setName]['Runtime (mins)'] = []
+
+    def OnNumVotesSelection(self, event):
+        setName = self.setNames[self.selectedSet]
+        self.filterParams[setName]['Num Votes'] = [self.filterNumVotesSelection.selectedValueMin,
+                                                   self.filterNumVotesSelection.selectedValueMax]
+
+    def OnNumVotesSelectionCheckBox(self, event):
+        setName = self.setNames[self.selectedSet]
+        if self.filterNumVotesSelection.isActive:
+            self.filterParams[setName]['Num Votes'] = self.filterRanges[setName]['Num Votes']
+        else:
+            self.filterParams[setName]['Num Votes'] = []
+
+    def OnDateReleaseSelection(self, event):
+        setName = self.setNames[self.selectedSet]
+        self.filterParams[setName]['Release Date'] = [self.filterDateReleaseSelection.selectedValueMin,
+                                                      self.filterDateReleaseSelection.selectedValueMax]
+
+    def OnDateReleaseSelectionCheckBox(self, event):
+        setName = self.setNames[self.selectedSet]
+        if self.filterDateReleaseSelection.isActive:
+            self.filterParams[setName]['Release Date'] = self.filterRanges[setName]['Release Date']
+        else:
+            self.filterParams[setName]['Release Date'] = []
+
+    def OnDateRatedSelection(self, event):
+        setName = self.setNames[self.selectedSet]
+        self.filterParams[setName]['Date Rated'] = [self.filterDateRatedSelection.selectedValueMin,
+                                                    self.filterDateRatedSelection.selectedValueMax]
+
+    def OnDateRatedSelectionCheckBox(self, event):
+        setName = self.setNames[self.selectedSet]
+        if self.filterDateRatedSelection.isActive:
+            self.filterParams[setName]['Date Rated'] = self.filterRanges[setName]['Date Rated']
+        else:
+            self.filterParams[setName]['Date Rated'] = []
 
     def EnableFilter(self, enable):
         """
@@ -105,6 +163,9 @@ class MainFilterPanel(wx.Panel):
         self.filterYourRateSelection.Enable(enable)
         self.filterIMDBRateSelection.Enable(enable)
         self.filterRuntimeSelection.Enable(enable)
+        self.filterNumVotesSelection.Enable(enable)
+        self.filterDateReleaseSelection.Enable(enable)
+        self.filterDateRatedSelection.Enable(enable)
 
     def setFilterRanges(self, filterRanges):
         setName = self.setNames[self.selectedSet]
@@ -119,6 +180,15 @@ class MainFilterPanel(wx.Panel):
         runtimeRange = self.filterRanges[setName]['Runtime (mins)']
         self.filterRuntimeSelection.SetSpinSelectorRanges(runtimeRange)
 
+        NumVotesRange = self.filterRanges[setName]['Num Votes']
+        self.filterNumVotesSelection.SetSpinSelectorRanges(NumVotesRange)
+
+        DateReleaseRange = self.filterRanges[setName]['Release Date']
+        self.filterDateReleaseSelection.SetDateSelectorRanges(DateReleaseRange)
+
+        DateRatedRange = self.filterRanges[setName]['Date Rated']
+        self.filterDateRatedSelection.SetDateSelectorRanges(DateRatedRange)
+
     def clearProps(self):
         self.selectedSet = 0
         self.filterParams = {}
@@ -131,6 +201,9 @@ class MainFilterPanel(wx.Panel):
         self.filterYourRateSelection.SetCurrentValues(self.filterParams[setName]['Your Rating'])
         self.filterIMDBRateSelection.SetCurrentValues(self.filterParams[setName]['IMDb Rating'])
         self.filterRuntimeSelection.SetCurrentValues(self.filterParams[setName]['Runtime (mins)'])
+        self.filterNumVotesSelection.SetCurrentValues(self.filterParams[setName]['Num Votes'])
+        self.filterDateReleaseSelection.SetCurrentValues(self.filterParams[setName]['Release Date'])
+        self.filterDateRatedSelection.SetCurrentValues(self.filterParams[setName]['Date Rated'])
 
     def resetFilter(self):
         self.filterYourRateSelection. SetSpinSelectorRanges([0, 10])
@@ -139,6 +212,13 @@ class MainFilterPanel(wx.Panel):
         self.filterIMDBRateSelection.SetCurrentValues([])
         self.filterRuntimeSelection.SetSpinSelectorRanges([0, 100])
         self.filterRuntimeSelection.SetCurrentValues([])
+        self.filterNumVotesSelection.SetSpinSelectorRanges([0, 100000])
+        self.filterNumVotesSelection.SetCurrentValues([])
+
+        self.filterDateReleaseSelection.SetDateSelectorRanges(['1900-01-01', '2100-01-01'])
+        self.filterDateReleaseSelection.SetCurrentValues([])
+        self.filterDateRatedSelection.SetDateSelectorRanges(['1900-01-01', '2100-01-01'])
+        self.filterDateRatedSelection.SetCurrentValues([])
 
 
 class ClearApplyButtonsPanel(wx.Panel):
@@ -234,7 +314,7 @@ class MinMaxSpinCtrlPanel(wx.Panel):
         Panel for selection of number using a spin control (real numbers).
     """
 
-    def __init__(self, parent, minValue, maxValue, inc, title):
+    def __init__(self, parent, minValue, maxValue, inc, width, title):
         super(MinMaxSpinCtrlPanel, self).__init__(parent)
 
         self.selectedValueMin = minValue
@@ -248,7 +328,7 @@ class MinMaxSpinCtrlPanel(wx.Panel):
         spinPanelStyle = wx.SP_ARROW_KEYS | wx.SP_VERTICAL
         self.spinCtrlMin = wx.SpinCtrlDouble(self,
                                              value="",
-                                             size=(60, -1),
+                                             size=(width, -1),
                                              style=spinPanelStyle,
                                              min=minValue,
                                              max=maxValue,
@@ -256,9 +336,10 @@ class MinMaxSpinCtrlPanel(wx.Panel):
                                              inc=inc
                                              )
         self.spinCtrlMin.Disable()
+        self.spinCtrlMin.SetDigits(0)
         self.spinCtrlMax = wx.SpinCtrlDouble(self,
                                              value="",
-                                             size=(60, -1),
+                                             size=(width, -1),
                                              style=spinPanelStyle,
                                              min=minValue,
                                              max=maxValue,
@@ -266,16 +347,19 @@ class MinMaxSpinCtrlPanel(wx.Panel):
                                              inc=inc
                                              )
         self.spinCtrlMax.Disable()
+        self.spinCtrlMax.SetDigits(0)
         self.Disable()
 
         # sizers
         spinCtrlsSizer = wx.BoxSizer(wx.HORIZONTAL)
         spinCtrlsSizer.Add(staticMinText, 0, wx.EXPAND)
         spinCtrlsSizer.Add(self.spinCtrlMin, 0, wx.EXPAND)
+        spinCtrlsSizer.Add((5, 0))
         spinCtrlsSizer.Add(staticMaxText, 0, wx.EXPAND)
         spinCtrlsSizer.Add(self.spinCtrlMax, 0, wx.EXPAND)
         panelSizer = wx.BoxSizer(wx.VERTICAL)
         panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
+        panelSizer.Add((0, 5))
         panelSizer.Add(spinCtrlsSizer, 0, wx.ALIGN_CENTER)
         self.SetSizer(panelSizer)
 
@@ -335,3 +419,121 @@ class MinMaxSpinCtrlPanel(wx.Panel):
     def enableSpinSelectors(self, enable):
         self.spinCtrlMin.Enable(enable)
         self.spinCtrlMax.Enable(enable)
+
+
+class MinMaxDateCtrlPanel(wx.Panel):
+    """
+        Panel for selection of date interval.
+    """
+
+    def __init__(self, parent, minValue, maxValue, width, title):
+        super(MinMaxDateCtrlPanel, self).__init__(parent)
+
+        self.selectedValueMin = minValue
+        self.selectedValueMax = maxValue
+        self.isActive = False
+
+        # controls
+        self.checkBox = wx.CheckBox(self, -1, title)
+        staticMinText = wx.StaticText(self, -1, 'From: ')
+        staticMaxText = wx.StaticText(self, -1, 'To: ')
+        datePanelStyle = wx.adv.DP_DROPDOWN
+        initMinDate = wx.DateTime()
+        initMinDate.ParseFormat(minValue, "%Y-%m-%d")
+        self.dateCtrlMin = wx.adv.DatePickerCtrl(self,
+                                                 dt=initMinDate,
+                                                 size=(width, -1),
+                                                 style=datePanelStyle
+                                                 )
+        self.dateCtrlMin.Disable()
+        initMaxDate = wx.DateTime()
+        initMaxDate.ParseFormat(maxValue, "%Y-%m-%d")
+        self.dateCtrlMax = wx.adv.DatePickerCtrl(self,
+                                                 dt=initMaxDate,
+                                                 size=(width, -1),
+                                                 style=datePanelStyle
+                                                 )
+        self.dateCtrlMax.Disable()
+        self.Disable()
+
+        # sizers
+        dateCtrlsSizer = wx.BoxSizer(wx.HORIZONTAL)
+        dateCtrlsSizer.Add(staticMinText, 0, wx.EXPAND)
+        dateCtrlsSizer.Add(self.dateCtrlMin, 0, wx.EXPAND)
+        dateCtrlsSizer.Add((5, 0))
+        dateCtrlsSizer.Add(staticMaxText, 0, wx.EXPAND)
+        dateCtrlsSizer.Add(self.dateCtrlMax, 0, wx.EXPAND)
+        panelSizer = wx.BoxSizer(wx.VERTICAL)
+        panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
+        panelSizer.Add((0, 5))
+        panelSizer.Add(dateCtrlsSizer, 0, wx.ALIGN_CENTER)
+        self.SetSizer(panelSizer)
+
+        # events
+        self.dateCtrlMin.Bind(wx.adv.EVT_DATE_CHANGED, self.OnDateSelectorMin)
+        self.dateCtrlMax.Bind(wx.adv.EVT_DATE_CHANGED, self.OnDateSelectorMax)
+        self.checkBox.Bind(wx.EVT_CHECKBOX, self.OnCheckBox)
+
+    def OnDateSelectorMin(self, event):
+        self.selectedValueMin = self.dateCtrlMin.GetValue().Format("%Y-%m-%d")
+        if self.selectedValueMin > self.selectedValueMax:
+            self.selectedValueMin = self.selectedValueMax
+            tempDate = wx.DateTime()
+            tempDate.ParseFormat(self.selectedValueMin, "%Y-%m-%d")
+            self.dateCtrlMin.SetValue(tempDate)
+        event.Skip()
+
+    def OnDateSelectorMax(self, event):
+        self.selectedValueMax = self.dateCtrlMax.GetValue().Format("%Y-%m-%d")
+        if self.selectedValueMax < self.selectedValueMin:
+            self.selectedValueMax = self.selectedValueMin
+            tempDate = wx.DateTime()
+            tempDate.ParseFormat(self.selectedValueMax, "%Y-%m-%d")
+            self.dateCtrlMax.SetValue(tempDate)
+        event.Skip()
+
+    def OnCheckBox(self, event):
+        self.isActive = not self.isActive
+        self.enableDateSelectors(self.isActive)
+        if not self.isActive:
+            self.SetCurrentValues([])
+        event.Skip()
+
+    def SetCurrentValues(self, values):
+        if values:
+            if not self.isActive:
+                # it should be enabled!
+                self.isActive = True
+                self.checkBox.SetValue(self.isActive)
+                self.enableDateSelectors(self.isActive)
+            self.selectedValueMin = values[0]
+            self.selectedValueMax = values[1]
+        else:
+            if self.isActive:
+                # it should be disabled!
+                self.isActive = False
+                self.checkBox.SetValue(self.isActive)
+                self.enableDateSelectors(self.isActive)
+            self.selectedValueMin = self.dateCtrlMin.GetRange()[1].Format("%Y-%m-%d")
+            self.selectedValueMax = self.dateCtrlMax.GetRange()[2].Format("%Y-%m-%d")
+        tempDateMin = wx.DateTime()
+        tempDateMin.ParseFormat(self.selectedValueMin, "%Y-%m-%d")
+        self.dateCtrlMin.SetValue(tempDateMin)
+        tempDateMax = wx.DateTime()
+        tempDateMax.ParseFormat(self.selectedValueMax, "%Y-%m-%d")
+        self.dateCtrlMax.SetValue(tempDateMax)
+
+    def SetDateSelectorRanges(self, ranges):
+        if ranges:
+            minDate = wx.DateTime()
+            minDate.ParseFormat(ranges[0], "%Y-%m-%d")
+            maxDate = wx.DateTime()
+            maxDate.ParseFormat(ranges[1], "%Y-%m-%d")
+            self.dateCtrlMin.SetRange(minDate,
+                                      maxDate)
+            self.dateCtrlMax.SetRange(minDate,
+                                      maxDate)
+
+    def enableDateSelectors(self, enable):
+        self.dateCtrlMin.Enable(enable)
+        self.dateCtrlMax.Enable(enable)
