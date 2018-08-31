@@ -24,8 +24,8 @@ class MainFilterPanel(wx.Panel):
                                                      'Set')
         self.filterYourRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 90, 'Your Rating')
         self.filterIMDBRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 90, 'IMDB Rating')
-        self.filterRuntimeSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100, 1, 90, 'Runtime (min)')
-        self.filterNumVotesSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100000, 500, 90, 'Num. Votes')
+        self.filterRuntimeSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100, 1, 90, 'Runtime (min)', True)
+        self.filterNumVotesSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100000, 500, 90, 'Num. Votes', True)
         self.filterDateReleaseSelection = MinMaxDateCtrlPanel(self.scrollPanel, '1900-01-01', '2100-01-01', -1, 'Release Date')
         self.filterDateRatedSelection = MinMaxDateCtrlPanel(self.scrollPanel, '1900-01-01', '2100-01-01', -1, 'Date Rated')
         self.clearApplyButtons = ClearApplyButtonsPanel(self)
@@ -311,10 +311,10 @@ class SliderPanel(wx.Panel):
 
 class MinMaxSpinCtrlPanel(wx.Panel):
     """
-        Panel for selection of number using a spin control (real numbers).
+        Panel for selection of number using a spin control (real numbers by default).
     """
 
-    def __init__(self, parent, minValue, maxValue, inc, width, title):
+    def __init__(self, parent, minValue, maxValue, inc, width, title, isInteger=False):
         super(MinMaxSpinCtrlPanel, self).__init__(parent)
 
         self.selectedValueMin = minValue
@@ -326,28 +326,17 @@ class MinMaxSpinCtrlPanel(wx.Panel):
         staticMinText = wx.StaticText(self, -1, 'Min: ')
         staticMaxText = wx.StaticText(self, -1, 'Max: ')
         spinPanelStyle = wx.SP_ARROW_KEYS | wx.SP_VERTICAL
-        self.spinCtrlMin = wx.SpinCtrlDouble(self,
-                                             value="",
-                                             size=(width, -1),
-                                             style=spinPanelStyle,
-                                             min=minValue,
-                                             max=maxValue,
-                                             initial=self.selectedValueMin,
-                                             inc=inc
-                                             )
-        self.spinCtrlMin.Disable()
-        self.spinCtrlMin.SetDigits(0)
-        self.spinCtrlMax = wx.SpinCtrlDouble(self,
-                                             value="",
-                                             size=(width, -1),
-                                             style=spinPanelStyle,
-                                             min=minValue,
-                                             max=maxValue,
-                                             initial=self.selectedValueMax,
-                                             inc=inc
-                                             )
-        self.spinCtrlMax.Disable()
-        self.spinCtrlMax.SetDigits(0)
+
+        if not isInteger:
+            self.spinCtrlMin = self.initSpinCtrlDouble(width, spinPanelStyle, minValue,
+                                                       maxValue, self.selectedValueMin, inc)
+            self.spinCtrlMax = self.initSpinCtrlDouble(width, spinPanelStyle, minValue,
+                                                       maxValue, self.selectedValueMax, inc)
+        else:
+            self.spinCtrlMin = self.initSpinCtrlInteger(width, spinPanelStyle, minValue,
+                                                        maxValue, self.selectedValueMin)
+            self.spinCtrlMax = self.initSpinCtrlInteger(width, spinPanelStyle, minValue,
+                                                        maxValue, self.selectedValueMin)
         self.Disable()
 
         # sizers
@@ -364,9 +353,25 @@ class MinMaxSpinCtrlPanel(wx.Panel):
         self.SetSizer(panelSizer)
 
         # events
-        self.spinCtrlMin.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnSpinSelectorMin)
-        self.spinCtrlMax.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnSpinSelectorMax)
+        eventName = wx.EVT_SPINCTRLDOUBLE
+        if isInteger:
+            eventName = wx.EVT_SPINCTRL
+        self.spinCtrlMin.Bind(eventName, self.OnSpinSelectorMin)
+        self.spinCtrlMax.Bind(eventName, self.OnSpinSelectorMax)
         self.checkBox.Bind(wx.EVT_CHECKBOX, self.OnCheckBox)
+
+    def initSpinCtrlDouble(self, width, spinPanelStyle, minValue, maxValue, initialValue, inc):
+        spinCtrl = wx.SpinCtrlDouble(self, value="", size=(width, -1), style=spinPanelStyle,
+                                     min=minValue, max=maxValue, initial=initialValue, inc=inc)
+        spinCtrl.Disable()
+        spinCtrl.SetDigits(1)
+        return spinCtrl
+
+    def initSpinCtrlInteger(self, width, spinPanelStyle, minValue, maxValue, initialValue):
+        spinCtrl = wx.SpinCtrl(self, value="", size=(width, -1), style=spinPanelStyle,
+                               min=minValue, max=maxValue, initial=initialValue)
+        spinCtrl.Disable()
+        return spinCtrl
 
     def OnSpinSelectorMin(self, event):
         self.selectedValueMin = self.spinCtrlMin.GetValue()
