@@ -341,11 +341,13 @@ class MinMaxSpinCtrlPanel(wx.Panel):
 
         # sizers
         spinCtrlsSizer = wx.BoxSizer(wx.HORIZONTAL)
+        spinCtrlsSizer.Add((5, 0))
         spinCtrlsSizer.Add(staticMinText, 0, wx.EXPAND)
         spinCtrlsSizer.Add(self.spinCtrlMin, 0, wx.EXPAND)
         spinCtrlsSizer.Add((5, 0))
         spinCtrlsSizer.Add(staticMaxText, 0, wx.EXPAND)
         spinCtrlsSizer.Add(self.spinCtrlMax, 0, wx.EXPAND)
+        spinCtrlsSizer.Add((5, 0))
         panelSizer = wx.BoxSizer(wx.VERTICAL)
         panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
         panelSizer.Add((0, 5))
@@ -463,11 +465,13 @@ class MinMaxDateCtrlPanel(wx.Panel):
 
         # sizers
         dateCtrlsSizer = wx.BoxSizer(wx.HORIZONTAL)
+        dateCtrlsSizer.Add((5, 0))
         dateCtrlsSizer.Add(staticMinText, 0, wx.EXPAND)
         dateCtrlsSizer.Add(self.dateCtrlMin, 0, wx.EXPAND)
         dateCtrlsSizer.Add((5, 0))
         dateCtrlsSizer.Add(staticMaxText, 0, wx.EXPAND)
         dateCtrlsSizer.Add(self.dateCtrlMax, 0, wx.EXPAND)
+        dateCtrlsSizer.Add((5, 0))
         panelSizer = wx.BoxSizer(wx.VERTICAL)
         panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
         panelSizer.Add((0, 5))

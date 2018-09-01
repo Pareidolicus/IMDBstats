@@ -21,51 +21,57 @@ class MovieManagerClass(object):
             yield {key: row[key].decode('latin-1').encode('utf8') if row[key] else row[key] for key in row}
 
     def readFile(self, csvFile):
-        with open(csvFile, 'rb') as inFile:
-            csv_reader = csv.DictReader(inFile, delimiter=',')
-            self.meta = csv_reader.fieldnames
-            self.meta.append('Active')
-            typesMoviesSet = {'video', 'movie', 'tvMovie'}
-            typesSeriesSet = {'tvSeries', 'tvEpisode'}
-            typesVideogamesSet = {'videoGame'}
-            self.filterParams = {'movies': {self.meta[i]: [] for i in range(len(self.meta))},
+
+        try:
+            with open(csvFile, 'rb') as inFile:
+                csv_reader = csv.DictReader(inFile, delimiter=',')
+                self.meta = csv_reader.fieldnames
+                self.meta.append('Active')
+                typesMoviesSet = {'video', 'movie', 'tvMovie'}
+                typesSeriesSet = {'tvSeries', 'tvEpisode'}
+                typesVideogamesSet = {'videoGame'}
+                self.filterParams = {'movies': {self.meta[i]: [] for i in range(len(self.meta))},
+                                     'series': {self.meta[i]: [] for i in range(len(self.meta))},
+                                     'videogames': {self.meta[i]: [] for i in range(len(self.meta))}}
+
+                reader = self.Latin1ToUnicodeDictReader(csv_reader)
+                for title in reader:
+                    title.update({'Active': True})
+                    title['Genres'] = set(title['Genres'].split(', '))
+                    title['Directors'] = set(title['Directors'].split(', '))
+                    if '' in title['Directors']:
+                        title['Directors'] = set()
+                    if not title['IMDb Rating']:
+                        title['IMDb Rating'] = None
+                    else:
+                        title['IMDb Rating'] = float(title['IMDb Rating'])
+                    title['Your Rating'] = float(title['Your Rating'])
+                    title['Num Votes'] = int(title['Num Votes'])
+                    if not title['Runtime (mins)']:
+                        title['Runtime (mins)'] = None
+                    else:
+                        title['Runtime (mins)'] = int(title['Runtime (mins)'])
+
+                    if title['Title Type'] in typesMoviesSet:
+                        title['Title Type'] = set(title['Title Type'].split(', '))
+                        self.allTitles['movies'].append(title)
+                    elif title['Title Type'] in typesSeriesSet:
+                        title['Title Type'] = set(title['Title Type'].split(', '))
+                        self.allTitles['series'].append(title)
+                    elif title['Title Type'] in typesVideogamesSet:
+                        title['Title Type'] = set(title['Title Type'].split(', '))
+                        self.allTitles['videogames'].append(title)
+
+            self.filterRanges = {'movies': {self.meta[i]: [] for i in range(len(self.meta))},
                                  'series': {self.meta[i]: [] for i in range(len(self.meta))},
                                  'videogames': {self.meta[i]: [] for i in range(len(self.meta))}}
-
-            reader = self.Latin1ToUnicodeDictReader(csv_reader)
-            for title in reader:
-                title.update({'Active': True})
-                title['Genres'] = set(title['Genres'].split(', '))
-                title['Directors'] = set(title['Directors'].split(', '))
-                if '' in title['Directors']:
-                    title['Directors'] = set()
-                if not title['IMDb Rating']:
-                    title['IMDb Rating'] = None
-                else:
-                    title['IMDb Rating'] = float(title['IMDb Rating'])
-                title['Your Rating'] = float(title['Your Rating'])
-                title['Num Votes'] = int(title['Num Votes'])
-                if not title['Runtime (mins)']:
-                    title['Runtime (mins)'] = None
-                else:
-                    title['Runtime (mins)'] = int(title['Runtime (mins)'])
-
-                if title['Title Type'] in typesMoviesSet:
-                    title['Title Type'] = set(title['Title Type'].split(', '))
-                    self.allTitles['movies'].append(title)
-                elif title['Title Type'] in typesSeriesSet:
-                    title['Title Type'] = set(title['Title Type'].split(', '))
-                    self.allTitles['series'].append(title)
-                elif title['Title Type'] in typesVideogamesSet:
-                    title['Title Type'] = set(title['Title Type'].split(', '))
-                    self.allTitles['videogames'].append(title)
-
-        self.filterRanges = {'movies': {self.meta[i]: [] for i in range(len(self.meta))},
-                             'series': {self.meta[i]: [] for i in range(len(self.meta))},
-                             'videogames': {self.meta[i]: [] for i in range(len(self.meta))}}
-        self.initFilterRanges('movies')
-        self.initFilterRanges('series')
-        self.initFilterRanges('videogames')
+            self.initFilterRanges('movies')
+            self.initFilterRanges('series')
+            self.initFilterRanges('videogames')
+            inFile.close()
+        except IOError:
+            return False
+        return True
 
     def clearFilter(self, setName):
         """

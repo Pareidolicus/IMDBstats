@@ -4,15 +4,17 @@ import MovieManager as movMng
 import FilterPanels as fPnls
 import InfoPanels as infoPnls
 import os
+import ConfigParser
 
 
 class MainWindow(wx.Frame):
     def __init__(self, parent, title):
-        wx.Frame.__init__(self, parent, title=title, size=(1000, 750))
+        wx.Frame.__init__(self, parent, title=title)
 
         # Atributes
         self.dirname = ''
         self.filename = ''
+        self.configFileName = 'config.ini'
         self.fileIsOpen = False
         self.myTitles = movMng.MovieManagerClass()
         self.activeTitles = []
@@ -26,6 +28,35 @@ class MainWindow(wx.Frame):
         self.initMenu()
         self.CreateStatusBar(2)
         self.SetStatusWidths([self.filterPanel.Size[0], -1])
+
+        # configuration file
+        self.config = ConfigParser.RawConfigParser()
+        self.initConfigFile(self.configFileName)
+        self.openLastFile()
+
+        # set window events
+        self.Bind(wx.EVT_CLOSE, self.OnExit)
+
+    def initConfigFile(self, name):
+        if self.config.read(name):
+            return
+        self.config.add_section('dirs')
+        self.config.set('dirs', 'filename', '')
+        self.config.set('dirs', 'dirname', '')
+        with open(name, 'wb') as configfile:
+            self.config.write(configfile)
+            configfile.close()
+        print('Configuration file created: ' + name)
+
+    def openLastFile(self):
+        if not self.config.get('dirs', 'filename'):
+            print('No last file path in configuration file')
+            return
+        self.filename = self.config.get('dirs', 'filename')
+        self.dirname = self.config.get('dirs', 'dirname')
+        if self.dirname:
+            if self.openNewFile(self.dirname, self.filename):
+                print('file ' + self.dirname + ' ' + self.filename + ' opened from config file')
 
     def initControls(self):
         # panels and control items
@@ -66,7 +97,7 @@ class MainWindow(wx.Frame):
         # set Menu events
         self.Bind(wx.EVT_MENU, self.OnOpen, openItem)
         self.Bind(wx.EVT_MENU, self.OnClose, closeItem)
-        self.Bind(wx.EVT_MENU, self.OnExit, exitItem)
+        self.Bind(wx.EVT_MENU, self.OnQuit, exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
     def OnSetSelection(self, event):
@@ -92,24 +123,12 @@ class MainWindow(wx.Frame):
 
     def OnOpen(self, event):
         """ Open a file """
-        dlg = wx.FileDialog(self, "Choose a file", self.dirname, "", "*.csv", wx.FD_OPEN)
+        dlg = wx.FileDialog(self, "Choose a file", self.dirname, self.filename, "*.csv", wx.FD_OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             # open file
             self.filename = dlg.GetFilename()
             self.dirname = dlg.GetDirectory()
-            self.myTitles.readFile(os.path.join(self.dirname, self.filename))
-            # update list
-            self.setActiveTitles()
-            self.updateListView()
-            self.infoNb.objectList.SetEmptyListMsg("No titles to show")
-            self.infoNb.objectList.SortBy(1)
-            # set status info
-            self.SetStatusText('File ' + self.filename + ' opened')
-            self.fileIsOpen = True
-            self.filterPanel.EnableFilter(True)
-            self.filterPanel.setFilterRanges(self.myTitles.filterRanges)
-            self.filterPanel.setFilterParams(self.myTitles.filterParams)
-            self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
+            self.openNewFile(self.dirname, self.filename)
         dlg.Destroy()
 
     def OnClose(self, event):
@@ -129,14 +148,36 @@ class MainWindow(wx.Frame):
         self.activeTitles = []
         self.updateListView(True)
 
-    def OnExit(self, event):
+    def OnQuit(self, event):
         self.Close(True)
+
+    def OnExit(self, event):
+        self.updateConfigFile()
+        event.Skip()
 
     def OnAbout(self, event):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
         dlg = wx.MessageDialog(self, "About IMDBstats\n\nA program that computes statistics from your movies rated on IMDB.com\n\nCreated by Diego Ruiz\n", "About IMDB statistics", wx.OK)
         dlg.ShowModal()  # Show it
         dlg.Destroy()  # finally destroy it when finished.
+
+    def openNewFile(self, dirName, fileName):
+        # open file
+        if not self.myTitles.readFile(os.path.join(dirName, fileName)):
+            return False
+        # update list
+        self.setActiveTitles()
+        self.updateListView()
+        self.infoNb.objectList.SetEmptyListMsg("No titles to show")
+        self.infoNb.objectList.SortBy(1)
+        # set status info
+        self.SetStatusText('File ' + self.filename + ' opened')
+        self.fileIsOpen = True
+        self.filterPanel.EnableFilter(True)
+        self.filterPanel.setFilterRanges(self.myTitles.filterRanges)
+        self.filterPanel.setFilterParams(self.myTitles.filterParams)
+        self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
+        return True
 
     def createCustomList(self):
         numSelected = self.infoNb.objectList.GetSelectedItemCount()
@@ -178,11 +219,21 @@ class MainWindow(wx.Frame):
             tempText = '/episodes'
         self.SetStatusText(str(len(self.activeTitles)) + ' ' + self.currentSet + tempText, 1)
 
+    def updateConfigFile(self):
+        self.config.set('dirs', 'filename', self.filename)
+        self.config.set('dirs', 'dirname', self.dirname)
+        with open(self.configFileName, 'wb') as configfile:
+            self.config.write(configfile)
+            configfile.close()
+        print('Configuration file: ' + self.configFileName +
+              ' updated with filename ' + self.dirname + ' ' + self.filename)
+
 
 if __name__ == '__main__':
 
     app = wx.App(False)
     mainWind = MainWindow(None, "IMDB statistics - Movies")
     mainWind.Show(True)
+    mainWind.Maximize()
 
     app.MainLoop()
