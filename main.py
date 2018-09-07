@@ -27,7 +27,7 @@ class MainWindow(wx.Frame):
         # Menu and status bar
         self.initMenu()
         self.CreateStatusBar(2)
-        self.SetStatusWidths([self.filterPanel.Size[0], -1])
+        self.SetStatusWidths([290, -1]) #self.filterPanel.GetSize().width
 
         # configuration file
         self.config = ConfigParser.RawConfigParser()
@@ -115,7 +115,7 @@ class MainWindow(wx.Frame):
         label = event.GetEventObject().GetLabel()
         if label in {'Clear', 'Apply'}:
             self.CAButtonClicked(label)
-        if label == 'Custom List':
+        if label == 'List from selection':
             self.createCustomList()
 
     def OnColumn(self, event):

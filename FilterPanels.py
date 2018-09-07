@@ -19,17 +19,18 @@ class MainFilterPanel(wx.Panel):
         # controls
         self.scrollPanel = scrolled.ScrolledPanel(self)
         self.scrollPanel.SetupScrolling(scroll_x=False)
-        self.filterSetSelection = ListSelectionPanel(self.scrollPanel,
-                                                     ['Movies', 'Series', 'Videogames'],
-                                                     'Set')
+        self.filterSetSelection = ListSelectionPanel(self.scrollPanel, ['Movies', 'Series', 'Videogames'], 'Set')
         self.filterYourRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 90, 'Your Rating')
         self.filterIMDBRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 90, 'IMDB Rating')
         self.filterRuntimeSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100, 1, 90, 'Runtime (min)', True)
         self.filterNumVotesSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100000, 500, 90, 'Num. Votes', True)
         self.filterDateReleaseSelection = MinMaxDateCtrlPanel(self.scrollPanel, '1900-01-01', '2100-01-01', -1, 'Release Date')
         self.filterDateRatedSelection = MinMaxDateCtrlPanel(self.scrollPanel, '1900-01-01', '2100-01-01', -1, 'Date Rated')
+        self.filterGenreSelection = CheckListBoxPanel(self.scrollPanel, [], -1, 'Genres')
+        self.filterDirectorSelection = CheckListBoxPanel(self.scrollPanel, [], -1, 'Directors')
+
         self.clearApplyButtons = ClearApplyButtonsPanel(self)
-        self.customListButton = wx.Button(self, -1, "Custom List")
+        self.customListButton = wx.Button(self, -1, "List from selection")
         self.customListButton.Disable()
 
         # sizers
@@ -47,6 +48,10 @@ class MainFilterPanel(wx.Panel):
         filterParamsSizer.Add(self.filterDateReleaseSelection, 0, wx.EXPAND)
         filterParamsSizer.Add((0, vert_spacer))
         filterParamsSizer.Add(self.filterDateRatedSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add((0, vert_spacer))
+        filterParamsSizer.Add(self.filterGenreSelection, 0, wx.EXPAND)
+        filterParamsSizer.Add((0, vert_spacer))
+        filterParamsSizer.Add(self.filterDirectorSelection, 0, wx.EXPAND)
         filterParamsSizer.Add((0, vert_spacer))
 
         self.scrollPanel.SetSizer(filterParamsSizer)
@@ -70,6 +75,10 @@ class MainFilterPanel(wx.Panel):
         self.filterDateReleaseSelection.Bind(wx.EVT_CHECKBOX, self.OnDateReleaseSelectionCheckBox)
         self.filterDateRatedSelection.Bind(wx.adv.EVT_DATE_CHANGED, self.OnDateRatedSelection)
         self.filterDateRatedSelection.Bind(wx.EVT_CHECKBOX, self.OnDateRatedSelectionCheckBox)
+        self.filterGenreSelection.Bind(wx.EVT_CHECKLISTBOX, self.OnGenreSelection)
+        self.filterGenreSelection.Bind(wx.EVT_CHECKBOX, self.OnGenreSelectionCheckBox)
+        self.filterDirectorSelection.Bind(wx.EVT_CHECKLISTBOX, self.OnDirectorSelection)
+        self.filterDirectorSelection.Bind(wx.EVT_CHECKBOX, self.OnDirectorSelectionCheckBox)
 
     def OnSetSelection(self, event):
         self.selectedSet = self.filterSetSelection.selectedItem
@@ -149,6 +158,28 @@ class MainFilterPanel(wx.Panel):
         else:
             self.filterParams[setName]['Date Rated'] = []
 
+    def OnGenreSelection(self, event):
+        setName = self.setNames[self.selectedSet]
+        self.filterParams[setName]['Genres'] = self.filterGenreSelection.selectedSet
+
+    def OnGenreSelectionCheckBox(self, event):
+        setName = self.setNames[self.selectedSet]
+        if self.filterGenreSelection.isActive:
+            self.filterParams[setName]['Genres'] = self.filterRanges[setName]['Genres']
+        else:
+            self.filterParams[setName]['Genres'] = set()
+
+    def OnDirectorSelection(self, event):
+        setName = self.setNames[self.selectedSet]
+        self.filterParams[setName]['Directors'] = self.filterDirectorSelection.selectedSet
+
+    def OnDirectorSelectionCheckBox(self, event):
+        setName = self.setNames[self.selectedSet]
+        if self.filterDirectorSelection.isActive:
+            self.filterParams[setName]['Directors'] = self.filterRanges[setName]['Directors']
+        else:
+            self.filterParams[setName]['Directors'] = set()
+
     def EnableFilter(self, enable):
         """
             Enable/disables all the filter panel.
@@ -166,6 +197,8 @@ class MainFilterPanel(wx.Panel):
         self.filterNumVotesSelection.Enable(enable)
         self.filterDateReleaseSelection.Enable(enable)
         self.filterDateRatedSelection.Enable(enable)
+        self.filterGenreSelection.Enable(enable)
+        self.filterDirectorSelection.Enable(enable)
 
     def setFilterRanges(self, filterRanges):
         setName = self.setNames[self.selectedSet]
@@ -189,6 +222,12 @@ class MainFilterPanel(wx.Panel):
         DateRatedRange = self.filterRanges[setName]['Date Rated']
         self.filterDateRatedSelection.SetDateSelectorRanges(DateRatedRange)
 
+        GenresRange = self.filterRanges[setName]['Genres']
+        self.filterGenreSelection.SetCheckListSelectorRanges(GenresRange)
+
+        DirectorsRange = self.filterRanges[setName]['Directors']
+        self.filterDirectorSelection.SetCheckListSelectorRanges(DirectorsRange)
+
     def clearProps(self):
         self.selectedSet = 0
         self.filterParams = {}
@@ -204,6 +243,8 @@ class MainFilterPanel(wx.Panel):
         self.filterNumVotesSelection.SetCurrentValues(self.filterParams[setName]['Num Votes'])
         self.filterDateReleaseSelection.SetCurrentValues(self.filterParams[setName]['Release Date'])
         self.filterDateRatedSelection.SetCurrentValues(self.filterParams[setName]['Date Rated'])
+        self.filterGenreSelection.SetCurrentValues(self.filterParams[setName]['Genres'])
+        self.filterDirectorSelection.SetCurrentValues(self.filterParams[setName]['Directors'])
 
     def resetFilter(self):
         self.filterYourRateSelection. SetSpinSelectorRanges([0, 10])
@@ -219,6 +260,11 @@ class MainFilterPanel(wx.Panel):
         self.filterDateReleaseSelection.SetCurrentValues([])
         self.filterDateRatedSelection.SetDateSelectorRanges(['1900-01-01', '2100-01-01'])
         self.filterDateRatedSelection.SetCurrentValues([])
+
+        self.filterGenreSelection.SetCheckListSelectorRanges(set())
+        self.filterGenreSelection.SetCurrentValues(set())
+        self.filterDirectorSelection.SetCheckListSelectorRanges(set())
+        self.filterDirectorSelection.SetCurrentValues(set())
 
 
 class ClearApplyButtonsPanel(wx.Panel):
@@ -273,39 +319,6 @@ class ListSelectionPanel(wx.Panel):
 
     def OnListSelector(self, event):
         self.selectedItem = self.comboBox.GetCurrentSelection()
-        event.Skip()
-
-
-class SliderPanel(wx.Panel):
-    """
-        Panel for selection of number using a slider (integer number).
-    """
-
-    def __init__(self, parent, minValue, maxValue, title):
-        super(SliderPanel, self).__init__(parent)
-
-        self.selectedValue = (maxValue-minValue)/2
-
-        # controls
-        staticTitle = wx.StaticText(self, -1, title)
-        sliderStyle = wx.SL_HORIZONTAL | wx.SL_LABELS
-        self.sliderCtrl = wx.Slider(self,
-                                    value=self.selectedValue,
-                                    minValue=minValue,
-                                    maxValue=maxValue,
-                                    style=sliderStyle
-                                    )
-
-        # sizers
-        panelSizer = wx.BoxSizer(wx.VERTICAL)
-        panelSizer.Add(staticTitle, 0, wx.ALIGN_CENTER)
-        panelSizer.Add(self.sliderCtrl, 0, wx.EXPAND)
-        self.SetSizer(panelSizer)
-
-        # events
-        #self.sliderCtrl.Bind(wx.EVT_, self.OnSliderSelector)
-
-    def OnSliderSelector(self, event):
         event.Skip()
 
 
@@ -546,3 +559,64 @@ class MinMaxDateCtrlPanel(wx.Panel):
     def enableDateSelectors(self, enable):
         self.dateCtrlMin.Enable(enable)
         self.dateCtrlMax.Enable(enable)
+
+
+class CheckListBoxPanel(wx.Panel):
+    """
+        Panel for multiple selection of items in a list
+    """
+    def __init__(self, parent, items_list, height, title):
+        super(CheckListBoxPanel, self).__init__(parent)
+
+        # attributes
+        self.selectedSet = set()
+        self.isActive = False
+
+        # controls
+        self.checkBox = wx.CheckBox(self, -1, title)
+        checkListBoxStyle = wx.LB_MULTIPLE | wx.LB_HSCROLL | wx.LB_NEEDED_SB
+        self.checkListBox = wx.CheckListBox(self,
+                                            size=(-1, height),
+                                            choices=items_list,
+                                            style=checkListBoxStyle
+                                            )
+        self.checkListBox.Disable()
+        self.Disable()
+
+        # sizers
+        panelSizer = wx.BoxSizer(wx.VERTICAL)
+        panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
+        panelSizer.Add((0, 5))
+        panelSizer.Add(self.checkListBox, 0, wx.EXPAND)
+        self.SetSizer(panelSizer)
+
+        # events
+        self.checkBox.Bind(wx.EVT_CHECKBOX, self.OnCheckBox)
+        self.checkListBox.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckListSelector)
+
+    def OnCheckBox(self, event):
+        self.isActive = not self.isActive
+        self.enableCheckListSelector(self.isActive)
+        if not self.isActive:
+            self.SetCurrentValues([])
+        event.Skip()
+
+    def OnCheckListSelector(self, event):
+        selectedTuple = self.checkListBox.GetCheckedStrings()
+        self.selectedSet = set([str(x) for x in selectedTuple])
+        event.Skip()
+
+    def SetCurrentValues(self, values):
+        self.checkListBox.SetCheckedStrings(list(values))
+        return
+
+    def SetCheckListSelectorRanges(self, ranges):
+        if ranges:
+            sortedList = list(ranges)
+            sortedList.sort()
+            self.checkListBox.InsertItems(sortedList, 0)
+            return
+
+    def enableCheckListSelector(self, enable):
+        self.checkListBox.Enable(enable)
+
