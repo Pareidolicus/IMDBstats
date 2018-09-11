@@ -203,4 +203,3 @@ if __name__ == '__main__':
     myMovies = MovieManagerClass()
     myMovies.readFile('ratings.csv')
     print(myMovies.meta)
-    # print(myMovies.allTitles['movies'][0]['Release Date'])

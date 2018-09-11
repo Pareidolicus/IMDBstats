@@ -26,8 +26,8 @@ class MainFilterPanel(wx.Panel):
         self.filterNumVotesSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100000, 500, 90, 'Num. Votes', True)
         self.filterDateReleaseSelection = MinMaxDateCtrlPanel(self.scrollPanel, '1900-01-01', '2100-01-01', -1, 'Release Date')
         self.filterDateRatedSelection = MinMaxDateCtrlPanel(self.scrollPanel, '1900-01-01', '2100-01-01', -1, 'Date Rated')
-        self.filterGenreSelection = CheckListBoxPanel(self.scrollPanel, [], -1, 'Genres')
-        self.filterDirectorSelection = CheckListBoxPanel(self.scrollPanel, [], -1, 'Directors')
+        self.filterGenreSelection = CheckListBoxPanel(self.scrollPanel, [], 200, 'Genres')
+        self.filterDirectorSelection = CheckListBoxPanel(self.scrollPanel, [], 200, 'Directors')
 
         self.clearApplyButtons = ClearApplyButtonsPanel(self)
         self.customListButton = wx.Button(self, -1, "List from selection")
@@ -571,9 +571,10 @@ class CheckListBoxPanel(wx.Panel):
         # attributes
         self.selectedSet = set()
         self.isActive = False
+        self.checkListName = title
 
         # controls
-        self.checkBox = wx.CheckBox(self, -1, title)
+        self.checkBox = wx.CheckBox(self, -1, self.checkListName)
         checkListBoxStyle = wx.LB_MULTIPLE | wx.LB_HSCROLL | wx.LB_NEEDED_SB
         self.checkListBox = wx.CheckListBox(self,
                                             size=(-1, height),
@@ -599,24 +600,33 @@ class CheckListBoxPanel(wx.Panel):
         self.enableCheckListSelector(self.isActive)
         if not self.isActive:
             self.SetCurrentValues([])
+            self.updateSelectedInfo()
         event.Skip()
 
     def OnCheckListSelector(self, event):
         selectedTuple = self.checkListBox.GetCheckedStrings()
-        self.selectedSet = set([str(x) for x in selectedTuple])
+        self.selectedSet = set([x for x in selectedTuple])
+        self.updateSelectedInfo()
         event.Skip()
 
     def SetCurrentValues(self, values):
         self.checkListBox.SetCheckedStrings(list(values))
-        return
+        self.selectedSet = values
+        self.updateSelectedInfo()
 
     def SetCheckListSelectorRanges(self, ranges):
+        self.checkListBox.Clear()
         if ranges:
             sortedList = list(ranges)
             sortedList.sort()
             self.checkListBox.InsertItems(sortedList, 0)
-            return
+        self.updateSelectedInfo()
 
     def enableCheckListSelector(self, enable):
         self.checkListBox.Enable(enable)
 
+    def updateSelectedInfo(self):
+        numberCheckedItems = len(self.selectedSet)
+        self.checkBox.SetLabel(self.checkListName + ' (' + str(numberCheckedItems) + '/' + str(self.checkListBox.GetCount()) + ')')
+        self.checkBox.Fit()
+        self.Show()

@@ -27,7 +27,7 @@ class MainWindow(wx.Frame):
         # Menu and status bar
         self.initMenu()
         self.CreateStatusBar(2)
-        self.SetStatusWidths([290, -1]) #self.filterPanel.GetSize().width
+        self.SetStatusWidths([310, -1]) #self.filterPanel.GetSize().width
 
         # configuration file
         self.config = ConfigParser.RawConfigParser()
