@@ -13,8 +13,8 @@ class MainInfoPanel(wx.Notebook):
         self.objectList = ObjectListClass(self)
 
         self.AddPage(self.objectList, "List")
-        self.AddPage(wx.Panel(self), "Graphs")
-        #infoNb.AddPage(wx.Panel(infoNb), "Records")
+        # self.AddPage(wx.Panel(self), "Graphs")
+        # infoNb.AddPage(wx.Panel(infoNb), "Records")
 
 
 class ObjectListClass(ObjectListView):

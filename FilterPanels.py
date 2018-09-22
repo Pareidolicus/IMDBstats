@@ -67,9 +67,9 @@ class MainFilterPanel(wx.Panel):
         self.filterYourRateSelection.Bind(wx.EVT_CHECKBOX, self.OnYourRateSelectionCheckBox)
         self.filterIMDBRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnIMDBRateSelection)
         self.filterIMDBRateSelection.Bind(wx.EVT_CHECKBOX, self.OnIMDBRateSelectionCheckBox)
-        self.filterRuntimeSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnRuntimeSelection)
+        self.filterRuntimeSelection.Bind(wx.EVT_SPINCTRL, self.OnRuntimeSelection)
         self.filterRuntimeSelection.Bind(wx.EVT_CHECKBOX, self.OnRuntimeSelectionCheckBox)
-        self.filterNumVotesSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnNumVotesSelection)
+        self.filterNumVotesSelection.Bind(wx.EVT_SPINCTRL, self.OnNumVotesSelection)
         self.filterNumVotesSelection.Bind(wx.EVT_CHECKBOX, self.OnNumVotesSelectionCheckBox)
         self.filterDateReleaseSelection.Bind(wx.adv.EVT_DATE_CHANGED, self.OnDateReleaseSelection)
         self.filterDateReleaseSelection.Bind(wx.EVT_CHECKBOX, self.OnDateReleaseSelectionCheckBox)
@@ -164,10 +164,7 @@ class MainFilterPanel(wx.Panel):
 
     def OnGenreSelectionCheckBox(self, event):
         setName = self.setNames[self.selectedSet]
-        if self.filterGenreSelection.isActive:
-            self.filterParams[setName]['Genres'] = self.filterRanges[setName]['Genres']
-        else:
-            self.filterParams[setName]['Genres'] = set()
+        self.filterParams[setName]['Genres'] = set()
 
     def OnDirectorSelection(self, event):
         setName = self.setNames[self.selectedSet]
@@ -175,10 +172,7 @@ class MainFilterPanel(wx.Panel):
 
     def OnDirectorSelectionCheckBox(self, event):
         setName = self.setNames[self.selectedSet]
-        if self.filterDirectorSelection.isActive:
-            self.filterParams[setName]['Directors'] = self.filterRanges[setName]['Directors']
-        else:
-            self.filterParams[setName]['Directors'] = set()
+        self.filterParams[setName]['Directors'] = set()
 
     def EnableFilter(self, enable):
         """
@@ -205,12 +199,14 @@ class MainFilterPanel(wx.Panel):
         self.filterRanges = filterRanges
         self.updateFilterRanges(setName)
 
-    def setFilterParams(self, filter):
-        self.filterParams = filter
+    def setFilterParams(self, filterParams):
+        self.filterParams = filterParams
         self.showCurrentValues()
 
     def updateFilterRanges(self, setName):
         runtimeRange = self.filterRanges[setName]['Runtime (mins)']
+        if not runtimeRange:
+            runtimeRange = [0, 100]
         self.filterRuntimeSelection.SetSpinSelectorRanges(runtimeRange)
 
         NumVotesRange = self.filterRanges[setName]['Num Votes']
@@ -229,7 +225,6 @@ class MainFilterPanel(wx.Panel):
         self.filterDirectorSelection.SetCheckListSelectorRanges(DirectorsRange)
 
     def clearProps(self):
-        self.selectedSet = 0
         self.filterParams = {}
         self.filterRanges = {}
 
@@ -605,12 +600,13 @@ class CheckListBoxPanel(wx.Panel):
 
     def OnCheckListSelector(self, event):
         selectedTuple = self.checkListBox.GetCheckedStrings()
-        self.selectedSet = set([x for x in selectedTuple])
+        self.selectedSet = set([x.encode('utf8') for x in selectedTuple])
         self.updateSelectedInfo()
         event.Skip()
 
     def SetCurrentValues(self, values):
-        self.checkListBox.SetCheckedStrings(list(values))
+        unicodeValues = [x.decode('utf8') for x in values]
+        self.checkListBox.SetCheckedStrings(unicodeValues)
         self.selectedSet = values
         self.updateSelectedInfo()
 

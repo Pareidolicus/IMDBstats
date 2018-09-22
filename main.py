@@ -115,7 +115,7 @@ class MainWindow(wx.Frame):
         label = event.GetEventObject().GetLabel()
         if label in {'Clear', 'Apply'}:
             self.CAButtonClicked(label)
-        if label == 'List from selection':
+        elif label == 'List from selection':
             self.createCustomList()
 
     def OnColumn(self, event):
