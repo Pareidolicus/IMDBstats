@@ -605,9 +605,22 @@ class CheckListBoxPanel(wx.Panel):
         event.Skip()
 
     def SetCurrentValues(self, values):
-        unicodeValues = [x.decode('utf8') for x in values]
+        if values:
+            if not self.isActive:
+                # it should be enabled!
+                self.isActive = True
+                self.checkBox.SetValue(self.isActive)
+                self.enableCheckListSelector(self.isActive)
+            self.selectedSet = values
+        else:
+            if self.isActive:
+                # it should be disabled!
+                self.isActive = False
+                self.checkBox.SetValue(self.isActive)
+                self.enableCheckListSelector(self.isActive)
+            self.selectedSet = set()
+        unicodeValues = [x.decode('utf8') for x in self.selectedSet]
         self.checkListBox.SetCheckedStrings(unicodeValues)
-        self.selectedSet = values
         self.updateSelectedInfo()
 
     def SetCheckListSelectorRanges(self, ranges):

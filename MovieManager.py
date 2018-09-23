@@ -169,6 +169,7 @@ class MovieManagerClass(object):
         # If field is active and no values are provided, return false.
         if not values:
             print(field + ' field in ' + setName + ' set cant be activated because values are empty.')
+            self.filterParams[setName][field] = []
             return False
 
         # videogames has no runtime, so this field cant be activated for this set
@@ -187,7 +188,6 @@ class MovieManagerClass(object):
             if not filterPanelParams[field]:
                 activate = False
             self.switchFilterParam(setName, field, filterPanelParams[field], activate)
-
 
     def minValueForField(self, setName, field):
         return min(x[field] for x in self.allTitles[setName] if x is not None)
