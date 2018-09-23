@@ -34,6 +34,10 @@ class MainWindow(wx.Frame):
         self.initConfigFile(self.configFileName)
         self.openLastFile()
 
+        # set app icon
+        ico = wx.Icon('icon.ico', wx.BITMAP_TYPE_ICO)
+        self.SetIcon(ico)
+
         # set window events
         self.Bind(wx.EVT_CLOSE, self.OnExit)
 
