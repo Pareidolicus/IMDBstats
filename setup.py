@@ -6,7 +6,7 @@ target = Executable(
     base="Win32GUI",
 )
 
-includefiles = ["icon.ico"]
+includefiles = ["icon.ico", "config.ini"]
 
 setup(
     name="statsIMDB",

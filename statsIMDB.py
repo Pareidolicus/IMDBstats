@@ -47,10 +47,13 @@ class MainWindow(wx.Frame):
         self.config.add_section('dirs')
         self.config.set('dirs', 'filename', '')
         self.config.set('dirs', 'dirname', '')
-        with open(name, 'wb') as configfile:
-            self.config.write(configfile)
-            configfile.close()
-        print('Configuration file created: ' + name)
+        try:
+            with open(name, 'wb') as configfile:
+                self.config.write(configfile)
+                configfile.close()
+            print('Configuration file created: ' + name)
+        except IOError:
+            print('WARNING: Config file could not be created')
 
     def openLastFile(self):
         if not self.config.get('dirs', 'filename'):
@@ -109,7 +112,7 @@ class MainWindow(wx.Frame):
         sets = ['movies', 'series', 'videogames']
         sel = self.filterPanel.selectedSet
 
-        self.SetTitle("IMDB statistics - " + titles[sel])
+        self.SetTitle("statsIMDB - " + titles[sel])
         self.currentSet = sets[sel]
         self.SetStatusText('Showing ' + sets[sel])
         self.setActiveTitles()
@@ -226,11 +229,14 @@ class MainWindow(wx.Frame):
     def updateConfigFile(self):
         self.config.set('dirs', 'filename', self.filename)
         self.config.set('dirs', 'dirname', self.dirname)
-        with open(self.configFileName, 'wb') as configfile:
-            self.config.write(configfile)
-            configfile.close()
-        print('Configuration file: ' + self.configFileName +
-              ' updated with filename ' + self.dirname + ' ' + self.filename)
+        try:
+            with open(self.configFileName, 'wb') as configfile:
+                self.config.write(configfile)
+                configfile.close()
+            print('Configuration file: ' + self.configFileName +
+                  ' updated with filename ' + self.dirname + ' ' + self.filename)
+        except IOError:
+            print('WARNING: config file could not be opened')
 
 
 if __name__ == '__main__':
