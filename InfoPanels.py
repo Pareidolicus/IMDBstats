@@ -1,4 +1,5 @@
 import wx
+import wx.adv
 from ObjectListView import ObjectListView, ColumnDefn
 
 
@@ -44,9 +45,17 @@ class ObjectListClass(ObjectListView):
 
         # events
         self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumn)
+        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemListActivated)
         #self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemListSelected)
         #self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemListDeselected)
 
     def OnColumn(self, event):
         self.TitleColumnSelected = self.myColumns[event.GetColumn()].title
         event.Skip()
+
+    def SetElementsInList(self, activeTitles):
+        self.SetObjects(activeTitles)
+
+    def OnItemListActivated(self, event):
+        item = self.GetObjectAt(event.GetIndex())
+        wx.LaunchDefaultBrowser(item['URL'])

@@ -218,7 +218,7 @@ class MainWindow(wx.Frame):
             self.SetStatusText('', 1)
         else:
             self.updateStatusListText()
-        self.infoNb.objectList.SetObjects(self.activeTitles)
+        self.infoNb.objectList.SetElementsInList(self.activeTitles)
 
     def updateStatusListText(self):
         tempText = ' '

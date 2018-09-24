@@ -37,21 +37,27 @@ class MovieManagerClass(object):
                 reader = self.Latin1ToUnicodeDictReader(csv_reader)
                 for title in reader:
                     title.update({'Active': True})
+                    # change to sets of words
                     title['Genres'] = set(title['Genres'].split(', '))
                     title['Directors'] = set(title['Directors'].split(', '))
                     if '' in title['Directors']:
                         title['Directors'] = set()
+
+                    # change to floats
                     if not title['IMDb Rating']:
                         title['IMDb Rating'] = None
                     else:
                         title['IMDb Rating'] = float(title['IMDb Rating'])
                     title['Your Rating'] = float(title['Your Rating'])
+
+                    # change to integers
                     title['Num Votes'] = int(title['Num Votes'])
                     if not title['Runtime (mins)']:
                         title['Runtime (mins)'] = None
                     else:
                         title['Runtime (mins)'] = int(title['Runtime (mins)'])
 
+                    # Classify in set according to title type
                     if title['Title Type'] in typesMoviesSet:
                         title['Title Type'] = set(title['Title Type'].split(', '))
                         self.allTitles['movies'].append(title)
