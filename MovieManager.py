@@ -106,9 +106,11 @@ class MovieManagerClass(object):
                 if not self.filterParams[setName][field]:
                     continue
                 if field in {'Genres', 'Directors', 'Title Type'}:
-                    if not title[field] & self.filterParams[setName][field]:
-                        act = False
-                        break
+                    values = self.filterParams[setName][field]['values']
+                    isInclusive = self.filterParams[setName][field]['mode']
+                    cond1 = (not isInclusive) or values <= title[field]
+                    cond2 = isInclusive or values & title[field]
+                    act = cond1 and cond2
                 else:
                     interval = self.filterParams[setName][field]
                     act = (interval[0] <= title[field]) and (title[field] <= interval[1])
@@ -193,6 +195,9 @@ class MovieManagerClass(object):
             activate = True
             if not filterPanelParams[field]:
                 activate = False
+            else:
+                if field in {'Genres', 'Directors', 'Title Type'} and (not filterPanelParams[field]['values']):
+                    activate = False
             self.switchFilterParam(setName, field, filterPanelParams[field], activate)
 
     def minValueForField(self, setName, field):

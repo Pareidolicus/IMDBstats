@@ -160,19 +160,27 @@ class MainFilterPanel(wx.Panel):
 
     def OnGenreSelection(self, event):
         setName = self.setNames[self.selectedSet]
-        self.filterParams[setName]['Genres'] = self.filterGenreSelection.selectedSet
+        self.filterParams[setName]['Genres'] = self.filterGenreSelection.currentSelection
 
     def OnGenreSelectionCheckBox(self, event):
         setName = self.setNames[self.selectedSet]
-        self.filterParams[setName]['Genres'] = set()
+        label = event.GetEventObject().GetLabel()
+        if label == "Inclusive mode":
+            self.filterParams[setName]['Genres'] = self.filterGenreSelection.currentSelection
+            return
+        self.filterParams[setName]['Genres'] = {'values': set(), 'mode': self.filterGenreSelection.selectedMode}
 
     def OnDirectorSelection(self, event):
         setName = self.setNames[self.selectedSet]
-        self.filterParams[setName]['Directors'] = self.filterDirectorSelection.selectedSet
+        self.filterParams[setName]['Directors'] = self.filterDirectorSelection.currentSelection
 
     def OnDirectorSelectionCheckBox(self, event):
         setName = self.setNames[self.selectedSet]
-        self.filterParams[setName]['Directors'] = set()
+        label = event.GetEventObject().GetLabel()
+        if label == "Inclusive mode":
+            self.filterParams[setName]['Directors'] = self.filterDirectorSelection.currentSelection
+            return
+        self.filterParams[setName]['Directors'] = {'values': set(), 'mode': self.filterDirectorSelection.selectedMode}
 
     def EnableFilter(self, enable):
         """
@@ -565,6 +573,8 @@ class CheckListBoxPanel(wx.Panel):
 
         # attributes
         self.selectedSet = set()
+        self.selectedMode = False
+        self.currentSelection = {'values': self.selectedSet, 'mode': self.selectedMode}
         self.isActive = False
         self.checkListName = title
 
@@ -577,6 +587,8 @@ class CheckListBoxPanel(wx.Panel):
                                             style=checkListBoxStyle
                                             )
         self.checkListBox.Disable()
+        self.checkMode = wx.CheckBox(self, -1, "Inclusive mode", style=wx.ALIGN_RIGHT)
+        self.checkMode.Disable()
         self.Disable()
 
         # sizers
@@ -584,11 +596,13 @@ class CheckListBoxPanel(wx.Panel):
         panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
         panelSizer.Add((0, 5))
         panelSizer.Add(self.checkListBox, 0, wx.EXPAND)
+        panelSizer.Add(self.checkMode, 0, wx.EXPAND)
         self.SetSizer(panelSizer)
 
         # events
         self.checkBox.Bind(wx.EVT_CHECKBOX, self.OnCheckBox)
         self.checkListBox.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckListSelector)
+        self.checkMode.Bind(wx.EVT_CHECKBOX, self.OnCheckMode)
 
     def OnCheckBox(self, event):
         self.isActive = not self.isActive
@@ -598,14 +612,21 @@ class CheckListBoxPanel(wx.Panel):
             self.updateSelectedInfo()
         event.Skip()
 
+    def OnCheckMode(self, event):
+        self.selectedMode = not self.selectedMode
+        self.currentSelection['mode'] = self.selectedMode
+        event.Skip()
+
     def OnCheckListSelector(self, event):
         selectedTuple = self.checkListBox.GetCheckedStrings()
         self.selectedSet = set([x.encode('utf8') for x in selectedTuple])
+        self.currentSelection['values'] = self.selectedSet
         self.updateSelectedInfo()
         event.Skip()
 
-    def SetCurrentValues(self, values):
-        if values:
+    def SetCurrentValues(self, dictValuesMode):
+        if dictValuesMode:
+            values = dictValuesMode['values']
             if not self.isActive:
                 # it should be enabled!
                 self.isActive = True
@@ -619,6 +640,7 @@ class CheckListBoxPanel(wx.Panel):
                 self.checkBox.SetValue(self.isActive)
                 self.enableCheckListSelector(self.isActive)
             self.selectedSet = set()
+        self.currentSelection['values'] = self.selectedSet
         unicodeValues = [x.decode('utf8') for x in self.selectedSet]
         self.checkListBox.SetCheckedStrings(unicodeValues)
         self.updateSelectedInfo()
@@ -633,6 +655,7 @@ class CheckListBoxPanel(wx.Panel):
 
     def enableCheckListSelector(self, enable):
         self.checkListBox.Enable(enable)
+        self.checkMode.Enable(enable)
 
     def updateSelectedInfo(self):
         numberCheckedItems = len(self.selectedSet)
