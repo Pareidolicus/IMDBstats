@@ -28,6 +28,7 @@ class ObjectListClass(ObjectListView):
 
         # attributes
         self.TitleColumnSelected = "Title"
+        self.activatedItem = {}
         self.myColumns = [
             ColumnDefn(title="Year", align="center", valueGetter="Year", isEditable=False, fixedWidth=75),
             ColumnDefn(title="Title", width=250, valueGetter="Title", isEditable=False, minimumWidth=200, isSearchable=True),
@@ -46,8 +47,6 @@ class ObjectListClass(ObjectListView):
         # events
         self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumn)
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemListActivated)
-        #self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemListSelected)
-        #self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemListDeselected)
 
     def OnColumn(self, event):
         self.TitleColumnSelected = self.myColumns[event.GetColumn()].title
@@ -57,5 +56,5 @@ class ObjectListClass(ObjectListView):
         self.SetObjects(activeTitles)
 
     def OnItemListActivated(self, event):
-        item = self.GetObjectAt(event.GetIndex())
-        wx.LaunchDefaultBrowser(item['URL'])
+        self.activatedItem = self.GetObjectAt(event.GetIndex())
+        event.Skip()

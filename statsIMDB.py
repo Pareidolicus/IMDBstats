@@ -19,6 +19,8 @@ class MainWindow(wx.Frame):
         self.myTitles = movMng.MovieManagerClass()
         self.activeTitles = []
         self.currentSet = 'movies'
+        self.settingsOptions = {'noConfBrowser': "Don't ask for confirmation when open the browser after double-click on title."}
+        self.settingsSelection = {key: False for key in self.settingsOptions}
 
         # init controls and sizers
         self.initControls()
@@ -33,6 +35,7 @@ class MainWindow(wx.Frame):
         self.config = ConfigParser.RawConfigParser()
         self.initConfigFile(self.configFileName)
         self.openLastFile()
+        self.loadSettings()
 
         # set app icon
         ico = wx.Icon('icon.ico', wx.BITMAP_TYPE_ICO)
@@ -47,6 +50,9 @@ class MainWindow(wx.Frame):
         self.config.add_section('dirs')
         self.config.set('dirs', 'filename', '')
         self.config.set('dirs', 'dirname', '')
+        self.config.add_section('settings')
+        for key in self.settingsOptions:
+            self.config.set('settings', key, 'false')
         try:
             with open(name, 'wb') as configfile:
                 self.config.write(configfile)
@@ -65,6 +71,18 @@ class MainWindow(wx.Frame):
             if self.openNewFile(self.dirname, self.filename):
                 print('file ' + self.dirname + ' ' + self.filename + ' opened from config file')
 
+    def loadSettings(self):
+        if not self.config.has_section('settings'):
+            return
+        for key in self.settingsOptions:
+            self.settingsSelection[key] = self.config.getboolean('settings', key)
+
+    def saveSettings(self):
+        if not self.config.has_section('settings'):
+            self.config.add_section('settings')
+        for key in self.settingsOptions:
+            self.config.set('settings', key, self.settingsSelection[key])
+
     def initControls(self):
         # panels and control items
         self.filterPanel = fPnls.MainFilterPanel(self)
@@ -74,6 +92,7 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnButton)
         self.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumn)
+        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnActivatedItem)
 
     def initSizers(self):
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -92,7 +111,10 @@ class MainWindow(wx.Frame):
         closeItem = filemenu.Append(wx.ID_CLOSE, wx.EmptyString, " Close current file")
         closeItem.Enable(self.fileIsOpen)
         filemenu.AppendSeparator()
+        settingsItem = filemenu.Append(wx.ID_ANY, "Settings...", " Edit settings")
+        filemenu.AppendSeparator()
         exitItem = filemenu.Append(wx.ID_EXIT, wx.EmptyString, " Terminate the program")
+
         aboutItem = helpmenu.Append(wx.ID_ABOUT, wx.EmptyString, " About IMDBstats")
 
         # Creating the menubar.
@@ -104,6 +126,7 @@ class MainWindow(wx.Frame):
         # set Menu events
         self.Bind(wx.EVT_MENU, self.OnOpen, openItem)
         self.Bind(wx.EVT_MENU, self.OnClose, closeItem)
+        self.Bind(wx.EVT_MENU, self.OnSettings, settingsItem)
         self.Bind(wx.EVT_MENU, self.OnQuit, exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
@@ -127,6 +150,17 @@ class MainWindow(wx.Frame):
 
     def OnColumn(self, event):
         self.SetStatusText('Sorted by ' + self.infoNb.objectList.TitleColumnSelected)
+
+    def OnActivatedItem(self, event):
+        if self.settingsSelection['noConfBrowser']:
+            wx.LaunchDefaultBrowser(self.infoNb.objectList.activatedItem['URL'])
+            return
+        dlg = wx.MessageDialog(self,
+                               "Show '" + self.infoNb.objectList.activatedItem['Title'] + "' on imdb.com",
+                               "Open browser",
+                               wx.OK_DEFAULT | wx.CANCEL | wx.ICON_QUESTION)
+        if dlg.ShowModal() == wx.ID_OK:
+            wx.LaunchDefaultBrowser(self.infoNb.objectList.activatedItem['URL'])
 
     def OnOpen(self, event):
         """ Open a file """
@@ -154,6 +188,23 @@ class MainWindow(wx.Frame):
         # update list view
         self.activeTitles = []
         self.updateListView(True)
+
+    def OnSettings(self, event):
+        keys = [x for x in self.settingsOptions]
+        dlg = wx.MultiChoiceDialog(self, "Choose settings", "Settings",
+                                   [self.settingsOptions[x] for x in keys],
+                                   wx.DEFAULT_DIALOG_STYLE | wx.OK | wx.CANCEL)
+        currentSelection = []
+        for ind in range(len(keys)):
+            if self.settingsSelection[keys[ind]]:
+                currentSelection += [ind]
+        dlg.SetSelections(currentSelection)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            tempList = dlg.GetSelections()
+            self.settingsSelection = {key: False for key in self.settingsOptions}
+            for ind in tempList:
+                self.settingsSelection[keys[ind]] = True
 
     def OnQuit(self, event):
         self.Close(True)
@@ -229,6 +280,7 @@ class MainWindow(wx.Frame):
     def updateConfigFile(self):
         self.config.set('dirs', 'filename', self.filename)
         self.config.set('dirs', 'dirname', self.dirname)
+        self.saveSettings()
         try:
             with open(self.configFileName, 'wb') as configfile:
                 self.config.write(configfile)
