@@ -86,8 +86,9 @@ class MovieManagerClass(object):
         :param setName: name of set
         :return:
         """
-        for f in self.meta:
-            self.switchFilterParam(setName, f, [], False)
+
+        tempParams = {self.meta[i]: [] for i in range(len(self.meta))}
+        self.setFilterParams(setName, tempParams)
         for title in self.allTitles[setName]:
             title['Active'] = True
 
@@ -156,49 +157,26 @@ class MovieManagerClass(object):
             for title in self.allTitles[setName]:
                 self.filterRanges[setName][field] |= title[field]
 
-    def switchFilterParam(self, setName, field, values, activate):
-        """
-        This function activates or deactivates a parameter in search filter,
-        for set setName and field. None values are not considered in search
-        if field is activated (only shown if deactivated). If all values of a field
-        are None, the field cannot be activated.
-
-        :param setName: set of titles: movies, series or videogames
-        :param field: field of parameter (title, year, rating...)
-        :param values: value set in field when it is activated. It can be empty if activated is False.
-        :param activate: True if we want to activate field in search
-        :return: True if activation/deactivation has been done successfully
-        """
-        # If field is not active, filter param is set to empty list
-        if not activate:
-            self.filterParams[setName][field] = []
-            return True
-
-        # If field is active and no values are provided, return false.
-        if not values:
-            print(field + ' field in ' + setName + ' set cant be activated because values are empty.')
-            self.filterParams[setName][field] = []
-            return False
-
-        # videogames has no runtime, so this field cant be activated for this set
-        if (field == 'Runtime (mins)') and (setName == 'videogames'):
-            self.filterParams[setName][field] = []
-            print(field + ' field in ' + setName + ' set cant be activated because videogames has no Runtime.')
-            return False
-
-        # Set values to filter parameter
-        self.filterParams[setName][field] = values
-        return True
-
     def setFilterParams(self, setName, filterPanelParams):
         for field in filterPanelParams:
-            activate = True
-            if not filterPanelParams[field]:
-                activate = False
+
+            if (field in {'Genres', 'Directors', 'Title Type'}) and ('values' in filterPanelParams[field]):
+                values = filterPanelParams[field]['values']
             else:
-                if field in {'Genres', 'Directors', 'Title Type'} and (not filterPanelParams[field]['values']):
-                    activate = False
-            self.switchFilterParam(setName, field, filterPanelParams[field], activate)
+                values = filterPanelParams[field]
+
+            if not values:
+                self.filterParams[setName][field] = []
+                continue
+
+            if (field == 'Runtime (mins)') and (setName == 'videogames'):
+                # videogames has no runtime, so this field cant be activated for this set
+                self.filterParams[setName][field] = []
+                print(field + ' field in ' + setName + ' set cant be activated because videogames has no Runtime.')
+                continue
+
+            # Set values to filter parameter
+            self.filterParams[setName][field] = filterPanelParams[field]
 
     def minValueForField(self, setName, field):
         return min(x[field] for x in self.allTitles[setName] if x is not None)
