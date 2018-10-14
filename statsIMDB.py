@@ -18,6 +18,7 @@ class MainWindow(wx.Frame):
         self.fileIsOpen = False
         self.myTitles = movMng.MovieManagerClass()
         self.activeTitles = []
+        self.titlesToShow = []
         self.currentSet = 'movies'
         self.settingsOptions = {'noConfBrowser': "Don't ask for confirmation when open the browser after double-click on title."}
         self.settingsSelection = {key: False for key in self.settingsOptions}
@@ -38,7 +39,7 @@ class MainWindow(wx.Frame):
         self.loadSettings()
 
         # set app icon
-        ico = wx.Icon('icon.ico', wx.BITMAP_TYPE_ICO)
+        ico = wx.Icon('icons/icon.ico', wx.BITMAP_TYPE_ICO)
         self.SetIcon(ico)
 
         # set window events
@@ -86,11 +87,14 @@ class MainWindow(wx.Frame):
     def initControls(self):
         # panels and control items
         self.filterPanel = fPnls.MainFilterPanel(self)
-        self.infoNb = infoPnls.MainInfoPanel(self)
+        self.infoNb = wx.Notebook(self)
+        self.mainListPanel = infoPnls.ListPanel(self.infoNb)
+        self.infoNb.AddPage(self.mainListPanel, "Titles")
+        #self.infoNb.AddPage(wx.Panel(self.infoNb), "Graphs")
 
         # set Control events
         self.Bind(wx.EVT_BUTTON, self.OnButton)
-        self.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
+        #self.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumn)
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnActivatedItem)
 
@@ -104,6 +108,7 @@ class MainWindow(wx.Frame):
 
         # Setting up the menu.
         filemenu = wx.Menu()
+        setmenu = wx.Menu()
         helpmenu = wx.Menu()
 
         # Menu items
@@ -115,52 +120,51 @@ class MainWindow(wx.Frame):
         filemenu.AppendSeparator()
         exitItem = filemenu.Append(wx.ID_EXIT, wx.EmptyString, " Terminate the program")
 
+        setMovieItem = setmenu.AppendRadioItem(-1, "Movies", "Movie set")
+        setSeriesItem = setmenu.AppendRadioItem(-1, "Series", "Series set")
+        setVideogamesItem = setmenu.AppendRadioItem(-1, "Videogames", "Videogames set")
+
         aboutItem = helpmenu.Append(wx.ID_ABOUT, wx.EmptyString, " About IMDBstats")
 
         # Creating the menubar.
         menuBar = wx.MenuBar()
         menuBar.Append(filemenu, "&File")
+        menuBar.Append(setmenu, "&Set")
         menuBar.Append(helpmenu, "&Help")
         self.SetMenuBar(menuBar)
+        menuBar.EnableTop(menuBar.FindMenu("Set"), self.fileIsOpen)
 
         # set Menu events
         self.Bind(wx.EVT_MENU, self.OnOpen, openItem)
         self.Bind(wx.EVT_MENU, self.OnClose, closeItem)
         self.Bind(wx.EVT_MENU, self.OnSettings, settingsItem)
         self.Bind(wx.EVT_MENU, self.OnQuit, exitItem)
+        self.Bind(wx.EVT_MENU, self.OnSetSelectionMovies, setMovieItem)
+        self.Bind(wx.EVT_MENU, self.OnSetSelectionSeries, setSeriesItem)
+        self.Bind(wx.EVT_MENU, self.OnSetSelectionVideogames, setVideogamesItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
-    def OnSetSelection(self, event):
-        titles = ['Movies', 'Series', 'Videogames']
-        sets = ['movies', 'series', 'videogames']
-        sel = self.filterPanel.selectedSet
+    def OnSetSelectionMovies(self, event):
+        self.setSelectionUpdate(0)
 
-        self.SetTitle("statsIMDB - " + titles[sel])
-        self.currentSet = sets[sel]
-        self.SetStatusText('Showing ' + sets[sel])
-        self.setActiveTitles()
-        self.updateListView()
+    def OnSetSelectionSeries(self, event):
+        self.setSelectionUpdate(1)
+
+    def OnSetSelectionVideogames(self, event):
+        self.setSelectionUpdate(2)
 
     def OnButton(self, event):
         label = event.GetEventObject().GetLabel()
         if label in {'Clear', 'Apply'}:
             self.CAButtonClicked(label)
-        elif label == 'List from selection':
+        elif label == 'customList':
             self.createCustomList()
 
     def OnColumn(self, event):
-        self.SetStatusText('Sorted by ' + self.infoNb.objectList.TitleColumnSelected)
+        self.SetStatusText('Sorted by ' + self.mainListPanel.getColumnSelected())
 
     def OnActivatedItem(self, event):
-        if self.settingsSelection['noConfBrowser']:
-            wx.LaunchDefaultBrowser(self.infoNb.objectList.activatedItem['URL'])
-            return
-        dlg = wx.MessageDialog(self,
-                               "Show '" + self.infoNb.objectList.activatedItem['Title'] + "' on imdb.com",
-                               "Open browser",
-                               wx.OK_DEFAULT | wx.CANCEL | wx.ICON_QUESTION)
-        if dlg.ShowModal() == wx.ID_OK:
-            wx.LaunchDefaultBrowser(self.infoNb.objectList.activatedItem['URL'])
+        self.mainListPanel.openTitleLink(self.settingsSelection['noConfBrowser'])
 
     def OnOpen(self, event):
         """ Open a file """
@@ -180,13 +184,16 @@ class MainWindow(wx.Frame):
         # disable controls
         self.filterPanel.EnableFilter(False)
         self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
+        setMenuIdx = self.GetMenuBar().FindMenu("Set")
+        self.GetMenuBar().EnableTop(setMenuIdx, self.fileIsOpen)
         # clear data
         self.filterPanel.clearProps()
         self.myTitles.clearFilter(self.currentSet)
         self.myTitles.clearProps()
-        self.infoNb.objectList.SetEmptyListMsg("Open .csv file\n(Ctrl+O)")
+        self.mainListPanel.setEmptyMessage("Open .csv file\n(Ctrl+O)")
         # update list view
         self.activeTitles = []
+        self.titlesToShow = []
         self.updateListView(True)
 
     def OnSettings(self, event):
@@ -225,9 +232,10 @@ class MainWindow(wx.Frame):
             return False
         # update list
         self.setActiveTitles()
+        self.setTitlesToShow()
         self.updateListView()
-        self.infoNb.objectList.SetEmptyListMsg("No titles to show")
-        self.infoNb.objectList.SortBy(1)
+        self.mainListPanel.setEmptyMessage("No titles to show")
+        self.mainListPanel.sortColumn(1)
         # set status info
         self.SetStatusText('File ' + self.filename + ' opened')
         self.fileIsOpen = True
@@ -235,14 +243,25 @@ class MainWindow(wx.Frame):
         self.filterPanel.setFilterRanges(self.myTitles.filterRanges)
         self.filterPanel.setFilterParams(self.myTitles.filterParams)
         self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
+        setMenuIdx = self.GetMenuBar().FindMenu("Set")
+        self.GetMenuBar().EnableTop(setMenuIdx, self.fileIsOpen)
         return True
 
+    def setSelectionUpdate(self, sel):
+        titles = ['Movies', 'Series', 'Videogames']
+        sets = ['movies', 'series', 'videogames']
+
+        self.filterPanel.updateSetSelection(sel)
+        self.SetTitle("statsIMDB - " + titles[sel])
+        self.currentSet = sets[sel]
+        self.SetStatusText('Showing ' + sets[sel])
+        self.setActiveTitles()
+        self.setTitlesToShow()
+        self.updateListView()
+
     def createCustomList(self):
-        numSelected = self.infoNb.objectList.GetSelectedItemCount()
-        if numSelected == 0:
-            self.SetStatusText('No titles selected')
-            return
         self.setActiveTitles(True)
+        self.setTitlesToShow()
         self.updateListView()
         self.SetStatusText('Custom List Created')
 
@@ -256,26 +275,31 @@ class MainWindow(wx.Frame):
             self.myTitles.applyFilter(self.currentSet)
         self.filterPanel.setFilterParams(self.myTitles.filterParams)
         self.setActiveTitles()
+        self.setTitlesToShow()
         self.updateListView()
 
     def setActiveTitles(self, custom=False):
         if custom:
-            self.activeTitles = self.infoNb.objectList.GetSelectedObjects()
+            self.activeTitles = self.mainListPanel.objectList.GetSelectedObjects()
         else:
             self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
+
+    def setTitlesToShow(self, searchTitles=False):
+        # if searchTitles, titlesToShow are result of search, not activeTitles
+        self.titlesToShow = self.activeTitles
 
     def updateListView(self, close=False):
         if close:
             self.SetStatusText('', 1)
         else:
             self.updateStatusListText()
-        self.infoNb.objectList.SetElementsInList(self.activeTitles)
+        self.mainListPanel.objectList.SetElementsInList(self.titlesToShow)
 
     def updateStatusListText(self):
         tempText = ' '
         if self.currentSet == 'series':
             tempText = '/episodes'
-        self.SetStatusText(str(len(self.activeTitles)) + ' ' + self.currentSet + tempText, 1)
+        self.SetStatusText(str(len(self.titlesToShow)) + ' ' + self.currentSet + tempText, 1)
 
     def updateConfigFile(self):
         self.config.set('dirs', 'filename', self.filename)

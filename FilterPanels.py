@@ -17,9 +17,9 @@ class MainFilterPanel(wx.Panel):
         self.filterRanges = {}
 
         # controls
-        self.scrollPanel = scrolled.ScrolledPanel(self)
+        #self.filterSetSelection = ListSelectionPanel(self, ['Movies', 'Series', 'Videogames'], 'Set')
+        self.scrollPanel = scrolled.ScrolledPanel(self, style=wx.BORDER_SIMPLE)
         self.scrollPanel.SetupScrolling(scroll_x=False)
-        self.filterSetSelection = ListSelectionPanel(self.scrollPanel, ['Movies', 'Series', 'Videogames'], 'Set')
         self.filterYourRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 90, 'Your Rating')
         self.filterIMDBRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 90, 'IMDB Rating')
         self.filterRuntimeSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0, 100, 1, 90, 'Runtime (min)', True)
@@ -30,12 +30,9 @@ class MainFilterPanel(wx.Panel):
         self.filterDirectorSelection = CheckListBoxPanel(self.scrollPanel, [], 200, 'Directors')
 
         self.clearApplyButtons = ClearApplyButtonsPanel(self)
-        self.customListButton = wx.Button(self, -1, "List from selection")
-        self.customListButton.Disable()
 
         # sizers
         filterParamsSizer = wx.BoxSizer(wx.VERTICAL)
-        filterParamsSizer.Add(self.filterSetSelection, 0, wx.EXPAND)
         filterParamsSizer.Add((0, vert_spacer))
         filterParamsSizer.Add(self.filterYourRateSelection, 0, wx.EXPAND)
         filterParamsSizer.Add((0, vert_spacer))
@@ -52,17 +49,17 @@ class MainFilterPanel(wx.Panel):
         filterParamsSizer.Add(self.filterGenreSelection, 0, wx.EXPAND)
         filterParamsSizer.Add((0, vert_spacer))
         filterParamsSizer.Add(self.filterDirectorSelection, 0, wx.EXPAND)
-        filterParamsSizer.Add((0, vert_spacer))
-
         self.scrollPanel.SetSizer(filterParamsSizer)
+
         filterSizer = wx.BoxSizer(wx.VERTICAL)
+        #filterSizer.Add((0, vert_spacer))
+        #filterSizer.Add(self.filterSetSelection, 0, wx.EXPAND)
         filterSizer.Add(self.scrollPanel, 1, wx.EXPAND)
-        filterSizer.Add(self.customListButton, 0, wx.EXPAND)
         filterSizer.Add(self.clearApplyButtons, 0, wx.EXPAND)
         self.SetSizer(filterSizer)
 
         # events
-        self.filterSetSelection.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
+        #self.filterSetSelection.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
         self.filterYourRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnYourRateSelection)
         self.filterYourRateSelection.Bind(wx.EVT_CHECKBOX, self.OnYourRateSelectionCheckBox)
         self.filterIMDBRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnIMDBRateSelection)
@@ -79,12 +76,6 @@ class MainFilterPanel(wx.Panel):
         self.filterGenreSelection.Bind(wx.EVT_CHECKBOX, self.OnGenreSelectionCheckBox)
         self.filterDirectorSelection.Bind(wx.EVT_CHECKLISTBOX, self.OnDirectorSelection)
         self.filterDirectorSelection.Bind(wx.EVT_CHECKBOX, self.OnDirectorSelectionCheckBox)
-
-    def OnSetSelection(self, event):
-        self.selectedSet = self.filterSetSelection.selectedItem
-        self.updateFilterRanges(self.setNames[self.selectedSet])
-        self.showCurrentValues()
-        event.Skip()
 
     def OnYourRateSelection(self, event):
         setName = self.setNames[self.selectedSet]
@@ -182,6 +173,11 @@ class MainFilterPanel(wx.Panel):
             return
         self.filterParams[setName]['Directors'] = {'values': set(), 'mode': self.filterDirectorSelection.selectedMode}
 
+    def updateSetSelection(self, setId):
+        self.selectedSet = setId
+        self.updateFilterRanges(self.setNames[self.selectedSet])
+        self.showCurrentValues()
+
     def EnableFilter(self, enable):
         """
             Enable/disables all the filter panel.
@@ -191,8 +187,7 @@ class MainFilterPanel(wx.Panel):
         :return:
         """
         self.clearApplyButtons.Enable(enable)
-        self.customListButton.Enable(enable)
-        self.filterSetSelection.Enable(enable)
+        #self.filterSetSelection.Enable(enable)
         self.filterYourRateSelection.Enable(enable)
         self.filterIMDBRateSelection.Enable(enable)
         self.filterRuntimeSelection.Enable(enable)
@@ -292,6 +287,7 @@ class ClearApplyButtonsPanel(wx.Panel):
 
 class ListSelectionPanel(wx.Panel):
     """
+        (NOT USED AT THE MOMENT)
         Panel for selection of element in list (dropdown).
         For example for selection of set movies, series or videogames
     """
@@ -302,7 +298,7 @@ class ListSelectionPanel(wx.Panel):
         self.selectedItem = 0
 
         # controls
-        staticTitle = wx.StaticText(self, -1, title)
+        #staticTitle = wx.StaticText(self, -1, title)
         self.comboBox = wx.ComboBox(self,
                                     value='Movies',
                                     choices=inputList,
@@ -313,7 +309,7 @@ class ListSelectionPanel(wx.Panel):
 
         # sizers
         panelSizer = wx.BoxSizer(wx.VERTICAL)
-        panelSizer.Add(staticTitle, 0, wx.ALIGN_CENTER)
+        #panelSizer.Add(staticTitle, 0, wx.ALIGN_CENTER)
         panelSizer.Add(self.comboBox, 0, wx.EXPAND)
         self.SetSizer(panelSizer)
 
