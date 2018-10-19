@@ -145,12 +145,15 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
     def OnSetSelectionMovies(self, event):
+        self.filterPanel.updateSetSelection(0)
         self.setSelectionUpdate(0)
 
     def OnSetSelectionSeries(self, event):
+        self.filterPanel.updateSetSelection(1)
         self.setSelectionUpdate(1)
 
     def OnSetSelectionVideogames(self, event):
+        self.filterPanel.updateSetSelection(2)
         self.setSelectionUpdate(2)
 
     def OnButton(self, event):
@@ -159,6 +162,11 @@ class MainWindow(wx.Frame):
             self.CAButtonClicked(label)
         elif label == 'customList':
             self.createCustomList()
+        elif label in {'movies', 'series', 'videogames'}:
+            setName = ['Movies', 'Series', 'Videogames'][self.filterPanel.selectedSet]
+            itemId = self.GetMenuBar().FindMenuItem("Set", setName)
+            self.GetMenuBar().Check(itemId, True)
+            self.setSelectionUpdate(self.filterPanel.selectedSet)
 
     def OnColumn(self, event):
         self.SetStatusText('Sorted by ' + self.mainListPanel.getColumnSelected())
@@ -251,7 +259,6 @@ class MainWindow(wx.Frame):
         titles = ['Movies', 'Series', 'Videogames']
         sets = ['movies', 'series', 'videogames']
 
-        self.filterPanel.updateSetSelection(sel)
         self.SetTitle("statsIMDB - " + titles[sel])
         self.currentSet = sets[sel]
         self.SetStatusText('Showing ' + sets[sel])

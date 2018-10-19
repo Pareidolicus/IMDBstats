@@ -17,6 +17,7 @@ class MainFilterPanel(wx.Panel):
         self.filterRanges = {}
 
         # controls
+        self.filterSetSelection = buttonsSetSelection(self)
         #self.filterSetSelection = ListSelectionPanel(self, ['Movies', 'Series', 'Videogames'], 'Set')
         self.scrollPanel = scrolled.ScrolledPanel(self, style=wx.BORDER_SIMPLE)
         self.scrollPanel.SetupScrolling(scroll_x=False)
@@ -52,13 +53,15 @@ class MainFilterPanel(wx.Panel):
         self.scrollPanel.SetSizer(filterParamsSizer)
 
         filterSizer = wx.BoxSizer(wx.VERTICAL)
-        #filterSizer.Add((0, vert_spacer))
-        #filterSizer.Add(self.filterSetSelection, 0, wx.EXPAND)
+        filterSizer.Add((0, vert_spacer))
+        filterSizer.Add(self.filterSetSelection, 0, wx.ALIGN_CENTER)
+        filterSizer.Add((0, vert_spacer))
         filterSizer.Add(self.scrollPanel, 1, wx.EXPAND)
         filterSizer.Add(self.clearApplyButtons, 0, wx.EXPAND)
         self.SetSizer(filterSizer)
 
         # events
+        self.filterSetSelection.Bind(wx.EVT_BUTTON, self.OnSetSelection)
         #self.filterSetSelection.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
         self.filterYourRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnYourRateSelection)
         self.filterYourRateSelection.Bind(wx.EVT_CHECKBOX, self.OnYourRateSelectionCheckBox)
@@ -76,6 +79,11 @@ class MainFilterPanel(wx.Panel):
         self.filterGenreSelection.Bind(wx.EVT_CHECKBOX, self.OnGenreSelectionCheckBox)
         self.filterDirectorSelection.Bind(wx.EVT_CHECKLISTBOX, self.OnDirectorSelection)
         self.filterDirectorSelection.Bind(wx.EVT_CHECKBOX, self.OnDirectorSelectionCheckBox)
+
+    def OnSetSelection(self, event):
+        label = event.GetEventObject().GetLabel()
+        self.selectedSet = self.setNames.index(label)
+        event.Skip()
 
     def OnYourRateSelection(self, event):
         setName = self.setNames[self.selectedSet]
@@ -319,6 +327,39 @@ class ListSelectionPanel(wx.Panel):
     def OnListSelector(self, event):
         self.selectedItem = self.comboBox.GetCurrentSelection()
         event.Skip()
+
+
+class buttonsSetSelection(wx.Panel):
+
+    def __init__(self, parent):
+        super(buttonsSetSelection, self).__init__(parent)
+
+        # controls
+        self.moviesButton = wx.Button(self, -1,
+                                      label="movies",
+                                      style=wx.BU_NOTEXT,
+                                      size=wx.Size(64, 64))
+        self.seriesButton = wx.Button(self, -1,
+                                      label="series",
+                                      style=wx.BU_NOTEXT,
+                                      size=wx.Size(64, 64))
+        self.videogamesButton = wx.Button(self, -1,
+                                      label="videogames",
+                                      style=wx.BU_NOTEXT,
+                                      size=wx.Size(64, 64))
+        # set images to buttons
+        self.moviesButton.SetBitmap(wx.Bitmap('icons/moviesIcon.png', wx.BITMAP_TYPE_PNG))
+        self.seriesButton.SetBitmap(wx.Bitmap('icons/seriesIcon.png', wx.BITMAP_TYPE_PNG))
+        self.videogamesButton.SetBitmap(wx.Bitmap('icons/videogamesIcon.png', wx.BITMAP_TYPE_PNG))
+
+        # sizers
+        setSelectionSizer = wx.BoxSizer(wx.HORIZONTAL)
+        setSelectionSizer.Add(self.moviesButton, 0, wx.ALIGN_CENTER)
+        setSelectionSizer.Add(20, 0)
+        setSelectionSizer.Add(self.seriesButton, 0, wx.ALIGN_CENTER)
+        setSelectionSizer.Add(20, 0)
+        setSelectionSizer.Add(self.videogamesButton, 0, wx.ALIGN_CENTER)
+        self.SetSizer(setSelectionSizer)
 
 
 class MinMaxSpinCtrlPanel(wx.Panel):

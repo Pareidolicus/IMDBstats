@@ -117,6 +117,7 @@ class topListPanel(wx.Panel):
 
         # events
 
+
 class ObjectListClass(ObjectListView):
 
     def __init__(self, parent):
