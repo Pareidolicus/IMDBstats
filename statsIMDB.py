@@ -94,7 +94,7 @@ class MainWindow(wx.Frame):
 
         # set Control events
         self.Bind(wx.EVT_BUTTON, self.OnButton)
-        #self.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
+        self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumn)
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnActivatedItem)
 
@@ -156,12 +156,25 @@ class MainWindow(wx.Frame):
         self.filterPanel.updateSetSelection(2)
         self.setSelectionUpdate(2)
 
+    def OnEnter(self, event):
+        self.setTitlesToShow(True)
+        self.updateListView()
+        self.SetStatusText('Showing search result')
+
     def OnButton(self, event):
         label = event.GetEventObject().GetLabel()
         if label in {'Clear', 'Apply'}:
             self.CAButtonClicked(label)
         elif label == 'customList':
             self.createCustomList()
+        elif label == 'activeList':
+            self.setTitlesToShow()
+            self.updateListView()
+            self.SetStatusText('Showing active titles')
+        elif label == 'search':
+            self.setTitlesToShow(True)
+            self.updateListView()
+            self.SetStatusText('Showing search result')
         elif label in {'movies', 'series', 'videogames'}:
             setName = ['Movies', 'Series', 'Videogames'][self.filterPanel.selectedSet]
             itemId = self.GetMenuBar().FindMenuItem("Set", setName)
@@ -293,6 +306,14 @@ class MainWindow(wx.Frame):
 
     def setTitlesToShow(self, searchTitles=False):
         # if searchTitles, titlesToShow are result of search, not activeTitles
+        if searchTitles:
+            self.setTitlesToShowBySearching()
+        else:
+            self.titlesToShow = self.activeTitles
+
+    def setTitlesToShowBySearching(self):
+        textToSearch = self.mainListPanel.topList.searchTerm
+        # TODO: search in active titles
         self.titlesToShow = self.activeTitles
 
     def updateListView(self, close=False):

@@ -64,12 +64,15 @@ class topListPanel(wx.Panel):
     def __init__(self, parent):
         super(topListPanel, self).__init__(parent)
 
+        # attributes
+        self.searchTerm = ''
+
         # controls
         searchTextStatic = wx.StaticText(self, -1, "Search by Title:")
         self.searchTextCtrl = wx.TextCtrl(self, -1,
                                           style=wx.TE_PROCESS_ENTER | wx.TE_RICH)
         self.searchButton = wx.Button(self, -1,
-                                      label="Search",
+                                      label="search",
                                       style=wx.BU_NOTEXT,
                                       size=wx.Size(32, 32))
         self.showActiveListButton = wx.Button(self, -1,
@@ -116,6 +119,20 @@ class topListPanel(wx.Panel):
         self.SetSizer(topListSizer)
 
         # events
+        self.searchButton.Bind(wx.EVT_BUTTON, self.OnSearchButton)
+        self.searchTextCtrl.Bind(wx.EVT_TEXT_ENTER, self.OnSearchButton)
+
+    def OnSearchButton(self, event):
+        self.setSearchTerm()
+        event.Skip()
+
+    def OnSearchEnter(self, event):
+        self.setSearchTerm()
+        event.Skip()
+
+    def setSearchTerm(self):
+        self.searchTerm = self.searchTextCtrl.GetValue()
+
 
 
 class ObjectListClass(ObjectListView):

@@ -18,7 +18,6 @@ class MainFilterPanel(wx.Panel):
 
         # controls
         self.filterSetSelection = buttonsSetSelection(self)
-        #self.filterSetSelection = ListSelectionPanel(self, ['Movies', 'Series', 'Videogames'], 'Set')
         self.scrollPanel = scrolled.ScrolledPanel(self, style=wx.BORDER_SIMPLE)
         self.scrollPanel.SetupScrolling(scroll_x=False)
         self.filterYourRateSelection = MinMaxSpinCtrlPanel(self.scrollPanel, 0.0, 10.0, 0.1, 90, 'Your Rating')
@@ -62,7 +61,6 @@ class MainFilterPanel(wx.Panel):
 
         # events
         self.filterSetSelection.Bind(wx.EVT_BUTTON, self.OnSetSelection)
-        #self.filterSetSelection.Bind(wx.EVT_COMBOBOX, self.OnSetSelection)
         self.filterYourRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnYourRateSelection)
         self.filterYourRateSelection.Bind(wx.EVT_CHECKBOX, self.OnYourRateSelectionCheckBox)
         self.filterIMDBRateSelection.Bind(wx.EVT_SPINCTRLDOUBLE, self.OnIMDBRateSelection)
@@ -83,6 +81,8 @@ class MainFilterPanel(wx.Panel):
     def OnSetSelection(self, event):
         label = event.GetEventObject().GetLabel()
         self.selectedSet = self.setNames.index(label)
+        self.updateFilterRanges(self.setNames[self.selectedSet])
+        self.showCurrentValues()
         event.Skip()
 
     def OnYourRateSelection(self, event):
@@ -159,27 +159,25 @@ class MainFilterPanel(wx.Panel):
 
     def OnGenreSelection(self, event):
         setName = self.setNames[self.selectedSet]
-        self.filterParams[setName]['Genres'] = self.filterGenreSelection.currentSelection
+        self.filterParams[setName]['Genres'] = self.filterGenreSelection.currentSelection.copy()
 
     def OnGenreSelectionCheckBox(self, event):
         setName = self.setNames[self.selectedSet]
-        label = event.GetEventObject().GetLabel()
-        if label == "Inclusive mode":
-            self.filterParams[setName]['Genres'] = self.filterGenreSelection.currentSelection
-            return
-        self.filterParams[setName]['Genres'] = {'values': set(), 'mode': self.filterGenreSelection.selectedMode}
+        if self.filterGenreSelection.isActive:
+            self.filterParams[setName]['Genres'] = self.filterGenreSelection.currentSelection.copy()
+        else:
+            self.filterParams[setName]['Genres'] = []
 
     def OnDirectorSelection(self, event):
         setName = self.setNames[self.selectedSet]
-        self.filterParams[setName]['Directors'] = self.filterDirectorSelection.currentSelection
+        self.filterParams[setName]['Directors'] = self.filterDirectorSelection.currentSelection.copy()
 
     def OnDirectorSelectionCheckBox(self, event):
         setName = self.setNames[self.selectedSet]
-        label = event.GetEventObject().GetLabel()
-        if label == "Inclusive mode":
-            self.filterParams[setName]['Directors'] = self.filterDirectorSelection.currentSelection
-            return
-        self.filterParams[setName]['Directors'] = {'values': set(), 'mode': self.filterDirectorSelection.selectedMode}
+        if self.filterDirectorSelection.isActive:
+            self.filterParams[setName]['Directors'] = self.filterDirectorSelection.currentSelection.copy()
+        else:
+            self.filterParams[setName]['Directors'] = []
 
     def updateSetSelection(self, setId):
         self.selectedSet = setId
@@ -195,7 +193,7 @@ class MainFilterPanel(wx.Panel):
         :return:
         """
         self.clearApplyButtons.Enable(enable)
-        #self.filterSetSelection.Enable(enable)
+        self.filterSetSelection.Enable(enable)
         self.filterYourRateSelection.Enable(enable)
         self.filterIMDBRateSelection.Enable(enable)
         self.filterRuntimeSelection.Enable(enable)
@@ -663,13 +661,12 @@ class CheckListBoxPanel(wx.Panel):
 
     def SetCurrentValues(self, dictValuesMode):
         if dictValuesMode:
-            values = dictValuesMode['values']
             if not self.isActive:
                 # it should be enabled!
                 self.isActive = True
                 self.checkBox.SetValue(self.isActive)
                 self.enableCheckListSelector(self.isActive)
-            self.selectedSet = values
+            self.selectedSet = dictValuesMode['values'].copy()
         else:
             if self.isActive:
                 # it should be disabled!
