@@ -119,19 +119,36 @@ class MovieManagerClass(object):
                     break
             title['Active'] = act
 
-    def getActiveTitles(self, setName):
+    def getActiveTitlesID(self, setName):
+        """
+            Return the list of ID's ('const' field) for actives titles and set 'setName'
+        :param setName: name of set
+        :return: list of 'Const' strings
+        """
+        return [title['Const'] for title in self.allTitles[setName] if title['Active']]
+
+    def getTitlesByID(self, setName, IDlist):
+        """
+            Given a list of of ID's ('Const' field), return the list of titles
+            with all the fields (dictionary).
+        :param setName: Name of set
+        :param IDlist: List of 'Const' values
+        :return: List of dictionary of titles
+        """
         output = []
         for title in self.allTitles[setName]:
+            if title['Const'] not in IDlist:
+                continue
+
             outTitle = deepcopy(title)
-            if title['Active']:
-                for field in ['Genres', 'Directors', 'Title Type']:
-                    outTitle[field] = ''
-                    for ind, word in enumerate(title[field]):
-                        if ind == 0:
-                            outTitle[field] += word
-                        else:
-                            outTitle[field] += ', ' + word
-                output.append(outTitle)
+            for field in ['Genres', 'Directors', 'Title Type']:
+                outTitle[field] = ''
+                for ind, word in enumerate(title[field]):
+                    if ind == 0:
+                        outTitle[field] += word
+                    else:
+                        outTitle[field] += ', ' + word
+            output.append(outTitle)
         return output
 
     def initFilterRanges(self, setName):

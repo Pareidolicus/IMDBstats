@@ -55,6 +55,9 @@ class ListPanel(wx.Panel):
     def getColumnSelected(self):
         return self.objectList.TitleColumnSelected
 
+    def getSelectedTitlesID(self):
+        return [title['Const'] for title in self.objectList.GetSelectedObjects()]
+
 
 class topListPanel(wx.Panel):
     """
@@ -132,7 +135,6 @@ class topListPanel(wx.Panel):
 
     def setSearchTerm(self):
         self.searchTerm = self.searchTextCtrl.GetValue()
-
 
 
 class ObjectListClass(ObjectListView):

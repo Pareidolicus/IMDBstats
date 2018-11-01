@@ -20,7 +20,8 @@ class MainWindow(wx.Frame):
         self.activeTitles = []
         self.titlesToShow = []
         self.currentSet = 'movies'
-        self.settingsOptions = {'noConfBrowser': "Don't ask for confirmation when open the browser after double-click on title."}
+        self.settingsOptions = {'noConfBrowser':
+                                "Don't ask for confirmation when open the browser after double-click on title."}
         self.settingsSelection = {key: False for key in self.settingsOptions}
 
         # init controls and sizers
@@ -300,9 +301,9 @@ class MainWindow(wx.Frame):
 
     def setActiveTitles(self, custom=False):
         if custom:
-            self.activeTitles = self.mainListPanel.objectList.GetSelectedObjects()
+            self.activeTitles = self.mainListPanel.getSelectedTitlesID()
         else:
-            self.activeTitles = self.myTitles.getActiveTitles(self.currentSet)
+            self.activeTitles = self.myTitles.getActiveTitlesID(self.currentSet)
 
     def setTitlesToShow(self, searchTitles=False):
         # if searchTitles, titlesToShow are result of search, not activeTitles
@@ -313,7 +314,7 @@ class MainWindow(wx.Frame):
 
     def setTitlesToShowBySearching(self):
         textToSearch = self.mainListPanel.topList.searchTerm
-        # TODO: search in active titles
+
         self.titlesToShow = self.activeTitles
 
     def updateListView(self, close=False):
@@ -321,7 +322,7 @@ class MainWindow(wx.Frame):
             self.SetStatusText('', 1)
         else:
             self.updateStatusListText()
-        self.mainListPanel.objectList.SetElementsInList(self.titlesToShow)
+        self.mainListPanel.objectList.SetElementsInList(self.myTitles.getTitlesByID(self.currentSet, self.titlesToShow))
 
     def updateStatusListText(self):
         tempText = ' '
