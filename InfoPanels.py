@@ -123,18 +123,12 @@ class topListPanel(wx.Panel):
 
         # events
         self.searchButton.Bind(wx.EVT_BUTTON, self.OnSearchButton)
-        self.searchTextCtrl.Bind(wx.EVT_TEXT_ENTER, self.OnSearchButton)
+        # self.searchTextCtrl.Bind(wx.EVT_TEXT_ENTER, self.OnSearchButton)
+        self.searchTextCtrl.Bind(wx.EVT_TEXT, self.OnSearchButton)
 
     def OnSearchButton(self, event):
-        self.setSearchTerm()
-        event.Skip()
-
-    def OnSearchEnter(self, event):
-        self.setSearchTerm()
-        event.Skip()
-
-    def setSearchTerm(self):
         self.searchTerm = self.searchTextCtrl.GetValue()
+        event.Skip()
 
 
 class ObjectListClass(ObjectListView):

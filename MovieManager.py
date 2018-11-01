@@ -151,6 +151,24 @@ class MovieManagerClass(object):
             output.append(outTitle)
         return output
 
+    def searchTitlesByName(self, setName, IDList, searchTerm):
+        """
+            Given a list of ID's ('Const'), search 'searchTerm' in
+            name of titles, and return a list of ID.
+        :param setName: Name of set.
+        :param IDList: List of 'Const' values of titles we want to do the searching
+        :param searchTerm: string to search in name of given titles
+        :return: List of ID of titles with coincidences in name
+        """
+        outList = []
+        for title in self.allTitles[setName]:
+            if title['Const'] not in IDList:
+                continue
+            name = title['Title']
+            if searchTerm.lower() in name.decode('utf8').lower():
+                outList.append(title['Const'])
+        return outList
+
     def initFilterRanges(self, setName):
         """
          Initialize min and max possible values for some filter parameters.

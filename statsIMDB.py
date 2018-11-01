@@ -95,7 +95,7 @@ class MainWindow(wx.Frame):
 
         # set Control events
         self.Bind(wx.EVT_BUTTON, self.OnButton)
-        self.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+        self.Bind(wx.EVT_TEXT, self.OnTextEnter)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColumn)
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnActivatedItem)
 
@@ -157,10 +157,8 @@ class MainWindow(wx.Frame):
         self.filterPanel.updateSetSelection(2)
         self.setSelectionUpdate(2)
 
-    def OnEnter(self, event):
-        self.setTitlesToShow(True)
-        self.updateListView()
-        self.SetStatusText('Showing search result')
+    def OnTextEnter(self, event):
+        self.searchTitles()
 
     def OnButton(self, event):
         label = event.GetEventObject().GetLabel()
@@ -173,14 +171,17 @@ class MainWindow(wx.Frame):
             self.updateListView()
             self.SetStatusText('Showing active titles')
         elif label == 'search':
-            self.setTitlesToShow(True)
-            self.updateListView()
-            self.SetStatusText('Showing search result')
+            self.searchTitles()
         elif label in {'movies', 'series', 'videogames'}:
             setName = ['Movies', 'Series', 'Videogames'][self.filterPanel.selectedSet]
             itemId = self.GetMenuBar().FindMenuItem("Set", setName)
             self.GetMenuBar().Check(itemId, True)
             self.setSelectionUpdate(self.filterPanel.selectedSet)
+
+    def searchTitles(self):
+        self.setTitlesToShow(True)
+        self.updateListView()
+        self.SetStatusText('Showing search result')
 
     def OnColumn(self, event):
         self.SetStatusText('Sorted by ' + self.mainListPanel.getColumnSelected())
@@ -314,8 +315,7 @@ class MainWindow(wx.Frame):
 
     def setTitlesToShowBySearching(self):
         textToSearch = self.mainListPanel.topList.searchTerm
-
-        self.titlesToShow = self.activeTitles
+        self.titlesToShow = self.myTitles.searchTitlesByName(self.currentSet, self.activeTitles, textToSearch)
 
     def updateListView(self, close=False):
         if close:
