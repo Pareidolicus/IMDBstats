@@ -19,6 +19,7 @@ class MainWindow(wx.Frame):
         self.myTitles = movMng.MovieManagerClass()
         self.activeTitles = []
         self.titlesToShow = []
+        self.customList = []
         self.currentSet = 'movies'
         self.settingsOptions = {'noConfBrowser':
                                 "Don't ask for confirmation when open the browser after double-click on title."}
@@ -90,7 +91,7 @@ class MainWindow(wx.Frame):
         self.filterPanel = fPnls.MainFilterPanel(self)
         self.infoNb = wx.Notebook(self)
         self.mainListPanel = infoPnls.ListPanel(self.infoNb)
-        self.infoNb.AddPage(self.mainListPanel, "Titles")
+        self.infoNb.AddPage(self.mainListPanel, "List")
         #self.infoNb.AddPage(wx.Panel(self.infoNb), "Graphs")
 
         # set Control events
@@ -166,19 +167,33 @@ class MainWindow(wx.Frame):
             self.CAButtonClicked(label)
         elif label == 'customList':
             self.createCustomList()
-        elif label == 'activeList':
+        # elif label == 'search':
+        #    self.searchTitles()
+        elif label == 'customDeleteList':
+            self.customList = []
+            self.setActiveTitles()
             self.setTitlesToShow()
             self.updateListView()
-            self.SetStatusText('Showing active titles')
-        elif label == 'search':
-            self.searchTitles()
+            self.SetStatusText('Custom List Removed')
+        elif label == 'customAddList':
+            self.addSelectedItemsToCustomList()
+            self.SetStatusText('Title added to custom list (' + str(len(self.customList)) + ')')
         elif label in {'movies', 'series', 'videogames'}:
             setName = ['Movies', 'Series', 'Videogames'][self.filterPanel.selectedSet]
             itemId = self.GetMenuBar().FindMenuItem("Set", setName)
             self.GetMenuBar().Check(itemId, True)
             self.setSelectionUpdate(self.filterPanel.selectedSet)
 
+    def showActiveList(self):
+        self.setTitlesToShow()
+        self.updateListView()
+        self.SetStatusText('Showing active titles')
+
     def searchTitles(self):
+        textToSearch = self.mainListPanel.topList.searchTerm
+        if not textToSearch:
+            self.showActiveList()
+            return
         self.setTitlesToShow(True)
         self.updateListView()
         self.SetStatusText('Showing search result')
@@ -206,6 +221,7 @@ class MainWindow(wx.Frame):
         self.fileIsOpen = False
         # disable controls
         self.filterPanel.EnableFilter(False)
+        self.mainListPanel.topList.Disable()
         self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
         setMenuIdx = self.GetMenuBar().FindMenu("Set")
         self.GetMenuBar().EnableTop(setMenuIdx, self.fileIsOpen)
@@ -217,6 +233,7 @@ class MainWindow(wx.Frame):
         # update list view
         self.activeTitles = []
         self.titlesToShow = []
+        self.customList = []
         self.updateListView(True)
 
     def OnSettings(self, event):
@@ -245,7 +262,7 @@ class MainWindow(wx.Frame):
 
     def OnAbout(self, event):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
-        dlg = wx.MessageDialog(self, "About IMDBstats\n\nA program that computes statistics from your movies rated on IMDB.com\n\nCreated by Diego Ruiz\n", "About IMDB statistics", wx.OK)
+        dlg = wx.MessageDialog(self, "About IMDBstats\n\nCompute statistics from your movies rated on IMDB.com\n\nCreated by Diego Ruiz\n\ngithub.com/Pareidolicus/IMDBstats", "About IMDB statistics", wx.OK)
         dlg.ShowModal()  # Show it
         dlg.Destroy()  # finally destroy it when finished.
 
@@ -263,6 +280,7 @@ class MainWindow(wx.Frame):
         self.SetStatusText('File ' + self.filename + ' opened')
         self.fileIsOpen = True
         self.filterPanel.EnableFilter(True)
+        self.mainListPanel.topList.Enable()
         self.filterPanel.setFilterRanges(self.myTitles.filterRanges)
         self.filterPanel.setFilterParams(self.myTitles.filterParams)
         self.GetMenuBar().Enable(wx.ID_CLOSE, self.fileIsOpen)
@@ -280,6 +298,12 @@ class MainWindow(wx.Frame):
         self.setActiveTitles()
         self.setTitlesToShow()
         self.updateListView()
+
+    def addSelectedItemsToCustomList(self):
+        selectedTitles = self.mainListPanel.getSelectedTitlesID()
+        tmpSet = set(self.customList)
+        tmpSet.update(selectedTitles)
+        self.customList = list(tmpSet)
 
     def createCustomList(self):
         self.setActiveTitles(True)
@@ -302,7 +326,8 @@ class MainWindow(wx.Frame):
 
     def setActiveTitles(self, custom=False):
         if custom:
-            self.activeTitles = self.mainListPanel.getSelectedTitlesID()
+            self.addSelectedItemsToCustomList()
+            self.activeTitles = self.customList
         else:
             self.activeTitles = self.myTitles.getActiveTitlesID(self.currentSet)
 
@@ -347,7 +372,7 @@ class MainWindow(wx.Frame):
 if __name__ == '__main__':
 
     app = wx.App(False)
-    mainWind = MainWindow(None, "IMDB statistics - Movies")
+    mainWind = MainWindow(None, "IMDB statistics (Beta) - Movies")
     mainWind.Show(True)
     mainWind.Maximize()
 

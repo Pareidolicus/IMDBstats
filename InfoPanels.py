@@ -23,12 +23,13 @@ class ListPanel(wx.Panel):
 
         # events
         self.topList.customListButton.Bind(wx.EVT_BUTTON, self.OnCustomListButton)
+        self.topList.customAddListButton.Bind(wx.EVT_BUTTON, self.OnCustomListButton)
 
     def OnCustomListButton(self, event):
         numSelected = self.objectList.GetSelectedItemCount()
         if numSelected == 0:
             dlg = wx.MessageDialog(self,
-                                   "Select at least one title",
+                                   "You must select at least one title",
                                    "Custom List",
                                    wx.OK | wx.ICON_WARNING)
             dlg.ShowModal()
@@ -40,7 +41,7 @@ class ListPanel(wx.Panel):
             wx.LaunchDefaultBrowser(self.objectList.activatedItem['URL'])
             return
         dlg = wx.MessageDialog(self,
-                               "Show '" + self.objectList.activatedItem['Title'] + "' on imdb.com",
+                               "Go to '" + self.objectList.activatedItem['Title'] + "' on imdb.com?",
                                "Open browser",
                                wx.OK_DEFAULT | wx.CANCEL | wx.ICON_QUESTION)
         if dlg.ShowModal() == wx.ID_OK:
@@ -74,10 +75,10 @@ class topListPanel(wx.Panel):
         searchTextStatic = wx.StaticText(self, -1, "Search by Title:")
         self.searchTextCtrl = wx.TextCtrl(self, -1,
                                           style=wx.TE_PROCESS_ENTER | wx.TE_RICH)
-        self.searchButton = wx.Button(self, -1,
-                                      label="search",
-                                      style=wx.BU_NOTEXT,
-                                      size=wx.Size(32, 32))
+        # self.searchButton = wx.Button(self, -1,
+        #                               label="search",
+        #                               style=wx.BU_NOTEXT,
+        #                               size=wx.Size(32, 32))
         self.showActiveListButton = wx.Button(self, -1,
                                               label="activeList",
                                               style=wx.BU_NOTEXT,
@@ -94,9 +95,10 @@ class topListPanel(wx.Panel):
                                                 label="customDeleteList",
                                                 style=wx.BU_NOTEXT,
                                                 size=wx.Size(32, 32))
+        self.Disable()
 
         # set images to buttons
-        self.searchButton.SetBitmap(wx.Bitmap('icons/searchIcon.png', wx.BITMAP_TYPE_PNG))
+        # self.searchButton.SetBitmap(wx.Bitmap('icons/searchIcon.png', wx.BITMAP_TYPE_PNG))
         self.showActiveListButton.SetBitmap(wx.Bitmap('icons/listActiveIcon.png', wx.BITMAP_TYPE_PNG))
         self.customAddListButton.SetBitmap(wx.Bitmap('icons/listCustomAddIcon.png', wx.BITMAP_TYPE_PNG))
         self.customListButton.SetBitmap(wx.Bitmap('icons/listCustomIcon.png', wx.BITMAP_TYPE_PNG))
@@ -109,8 +111,8 @@ class topListPanel(wx.Panel):
         topListSizer.Add((5, 0))
         topListSizer.Add(self.searchTextCtrl, 1, wx.ALIGN_CENTER)
         topListSizer.Add((10, 0))
-        topListSizer.Add(self.searchButton, 0, wx.ALIGN_CENTER)
-        topListSizer.Add((10, 0))
+        # topListSizer.Add(self.searchButton, 0, wx.ALIGN_CENTER)
+        # topListSizer.Add((10, 0))
         topListSizer.Add(self.showActiveListButton, 0, wx.ALIGN_CENTER)
         topListSizer.Add((5, 0))
         topListSizer.Add(self.customAddListButton, 0, wx.ALIGN_CENTER)
@@ -122,13 +124,16 @@ class topListPanel(wx.Panel):
         self.SetSizer(topListSizer)
 
         # events
-        self.searchButton.Bind(wx.EVT_BUTTON, self.OnSearchButton)
-        # self.searchTextCtrl.Bind(wx.EVT_TEXT_ENTER, self.OnSearchButton)
-        self.searchTextCtrl.Bind(wx.EVT_TEXT, self.OnSearchButton)
+        # self.searchButton.Bind(wx.EVT_BUTTON, self.OnSearchButton)
+        self.showActiveListButton.Bind(wx.EVT_BUTTON, self.OnShowActiveListButton)
+        self.searchTextCtrl.Bind(wx.EVT_TEXT, self.OnSearch)
 
-    def OnSearchButton(self, event):
+    def OnSearch(self, event):
         self.searchTerm = self.searchTextCtrl.GetValue()
         event.Skip()
+
+    def OnShowActiveListButton(self, event):
+        self.searchTextCtrl.Clear()
 
 
 class ObjectListClass(ObjectListView):

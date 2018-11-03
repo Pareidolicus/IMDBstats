@@ -2,13 +2,13 @@ from cx_Freeze import setup, Executable
 
 target = Executable(
     script="statsIMDB.py",
-    icon="icon.ico",
+    icon="icons/icon.ico",
     #shortcutName="statsIMDB",
     #shortcutDir="DesktopFolder",
     base="Win32GUI",
 )
 
-includefiles = ["icon.ico", "config.ini"]
+includefiles = ["icons/", "config.ini"]
 
 setup(
     name="statsIMDB",

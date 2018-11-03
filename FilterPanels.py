@@ -345,6 +345,8 @@ class buttonsSetSelection(wx.Panel):
                                       label="videogames",
                                       style=wx.BU_NOTEXT,
                                       size=wx.Size(64, 64))
+        self.Disable()
+
         # set images to buttons
         self.moviesButton.SetBitmap(wx.Bitmap('icons/moviesIcon.png', wx.BITMAP_TYPE_PNG))
         self.seriesButton.SetBitmap(wx.Bitmap('icons/seriesIcon.png', wx.BITMAP_TYPE_PNG))
