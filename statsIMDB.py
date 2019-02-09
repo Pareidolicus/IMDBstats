@@ -159,7 +159,8 @@ class MainWindow(wx.Frame):
         self.setSelectionUpdate(2)
 
     def OnTextEnter(self, event):
-        self.searchTitles()
+        if event.GetEventObject().GetClassName() == 'wxTextCtrl':
+            self.searchTitles()
 
     def OnButton(self, event):
         label = event.GetEventObject().GetLabel()
