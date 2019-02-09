@@ -4,7 +4,7 @@ import MovieManager as movMng
 import FilterPanels as fPnls
 import InfoPanels as infoPnls
 import os
-import ConfigParser
+import configparser
 
 
 class MainWindow(wx.Frame):
@@ -35,7 +35,7 @@ class MainWindow(wx.Frame):
         self.SetStatusWidths([310, -1]) #self.filterPanel.GetSize().width
 
         # configuration file
-        self.config = ConfigParser.RawConfigParser()
+        self.config = configparser.RawConfigParser()
         self.initConfigFile(self.configFileName)
         self.openLastFile()
         self.loadSettings()
@@ -57,7 +57,7 @@ class MainWindow(wx.Frame):
         for key in self.settingsOptions:
             self.config.set('settings', key, 'false')
         try:
-            with open(name, 'wb') as configfile:
+            with open(name, 'w') as configfile:
                 self.config.write(configfile)
                 configfile.close()
             print('Configuration file created: ' + name)
@@ -167,8 +167,6 @@ class MainWindow(wx.Frame):
             self.CAButtonClicked(label)
         elif label == 'customList':
             self.createCustomList()
-        # elif label == 'search':
-        #    self.searchTitles()
         elif label == 'customDeleteList':
             self.customList = []
             self.setActiveTitles()
@@ -360,7 +358,7 @@ class MainWindow(wx.Frame):
         self.config.set('dirs', 'dirname', self.dirname)
         self.saveSettings()
         try:
-            with open(self.configFileName, 'wb') as configfile:
+            with open(self.configFileName, 'w') as configfile:
                 self.config.write(configfile)
                 configfile.close()
             print('Configuration file: ' + self.configFileName +

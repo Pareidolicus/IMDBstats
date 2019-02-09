@@ -629,10 +629,15 @@ class CheckListBoxPanel(wx.Panel):
         self.Disable()
 
         # sizers
+        listBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
+        listBoxSizer.Add((5, 0))
+        listBoxSizer.Add(self.checkListBox, 1, wx.EXPAND)
+        listBoxSizer.Add((5, 0))
+
         panelSizer = wx.BoxSizer(wx.VERTICAL)
         panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
         panelSizer.Add((0, 5))
-        panelSizer.Add(self.checkListBox, 0, wx.EXPAND)
+        panelSizer.Add(listBoxSizer, 0, wx.EXPAND)
         panelSizer.Add(self.checkMode, 0, wx.EXPAND)
         self.SetSizer(panelSizer)
 
@@ -656,7 +661,7 @@ class CheckListBoxPanel(wx.Panel):
 
     def OnCheckListSelector(self, event):
         selectedTuple = self.checkListBox.GetCheckedStrings()
-        self.selectedSet = set([x.encode('utf8') for x in selectedTuple])
+        self.selectedSet = set([x for x in selectedTuple])
         self.currentSelection['values'] = self.selectedSet
         self.updateSelectedInfo()
         event.Skip()
@@ -677,7 +682,7 @@ class CheckListBoxPanel(wx.Panel):
                 self.enableCheckListSelector(self.isActive)
             self.selectedSet = set()
         self.currentSelection['values'] = self.selectedSet
-        unicodeValues = [x.decode('utf8') for x in self.selectedSet]
+        unicodeValues = [x for x in self.selectedSet]
         self.checkListBox.SetCheckedStrings(unicodeValues)
         self.updateSelectedInfo()
 

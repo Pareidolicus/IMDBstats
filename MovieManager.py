@@ -16,14 +16,10 @@ class MovieManagerClass(object):
         self.filterParams = {}
         self.filterRanges = {}
 
-    def Latin1ToUnicodeDictReader(self, csv_reader):
-        for row in csv_reader:
-            yield {key: row[key].decode('latin-1').encode('utf8') if row[key] else row[key] for key in row}
-
     def readFile(self, csvFile):
 
         try:
-            with open(csvFile, 'rb') as inFile:
+            with open(csvFile, 'rt') as inFile:
                 csv_reader = csv.DictReader(inFile, delimiter=',')
                 self.meta = csv_reader.fieldnames
                 self.meta.append('Active')
@@ -34,8 +30,7 @@ class MovieManagerClass(object):
                                      'series': {self.meta[i]: [] for i in range(len(self.meta))},
                                      'videogames': {self.meta[i]: [] for i in range(len(self.meta))}}
 
-                reader = self.Latin1ToUnicodeDictReader(csv_reader)
-                for title in reader:
+                for title in csv_reader:
                     title.update({'Active': True})
                     # change to sets of words
                     title['Genres'] = set(title['Genres'].split(', '))
@@ -165,7 +160,7 @@ class MovieManagerClass(object):
             if title['Const'] not in IDList:
                 continue
             name = title['Title']
-            if searchTerm.lower() in name.decode('utf8').lower():
+            if searchTerm.lower() in name.lower():
                 outList.append(title['Const'])
         return outList
 
