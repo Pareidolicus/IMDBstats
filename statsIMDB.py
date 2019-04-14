@@ -7,6 +7,44 @@ import os
 import configparser
 
 
+class downloadDialog(wx.Dialog):
+    def __init__(self, parent, title, userId):
+        wx.Dialog.__init__(self, parent, size=(-1, 100), id=wx.ID_ANY, title=title)
+
+        # attributes
+        self.userId = userId
+        self.mainText = wx.StaticText(self, -1, "IMDB user ID: ")
+        self.userIDTextCtrl = wx.TextCtrl(self, -1)
+        self.userIDTextCtrl.SetValue(self.userId)
+        self.downloadButton = wx.Button(self, -1, "Download")
+        if len(self.userId) == 0:
+            self.downloadButton.Disable()
+
+        # sizers
+        inputSizer = wx.BoxSizer(wx.HORIZONTAL)
+        inputSizer.Add((5, 0))
+        inputSizer.Add(self.mainText, 0, wx.ALIGN_CENTER)
+        inputSizer.Add(self.userIDTextCtrl, 1, wx.ALIGN_CENTER)
+        inputSizer.Add((10, 0))
+        inputSizer.Add(self.downloadButton, 0, wx.ALIGN_CENTER)
+        inputSizer.Add((5, 0))
+        self.SetSizer(inputSizer)
+
+        # events
+        self.userIDTextCtrl.Bind(wx.EVT_TEXT, self.OnUserIdInput)
+        self.downloadButton.Bind(wx.EVT_BUTTON, self.OnDownload)
+
+        self.Show()
+
+    def OnUserIdInput(self, event):
+        self.userId = self.userIDTextCtrl.GetValue()
+        self.downloadButton.Enable(len(self.userId) > 0)
+
+    def OnDownload(self, event):
+        url = 'https://imdb.com/user/' + self.userId + '/ratings/export'
+        wx.LaunchDefaultBrowser(url)
+
+
 class MainWindow(wx.Frame):
     def __init__(self, parent, title):
         wx.Frame.__init__(self, parent, title=title)
@@ -15,6 +53,7 @@ class MainWindow(wx.Frame):
         self.dirname = ''
         self.filename = ''
         self.configFileName = 'config.ini'
+        self.userId = 'ur13764044'
         self.fileIsOpen = False
         self.myTitles = movMng.MovieManagerClass()
         self.activeTitles = []
@@ -117,6 +156,7 @@ class MainWindow(wx.Frame):
         openItem = filemenu.Append(wx.ID_OPEN, wx.EmptyString, " Open .csv file")
         closeItem = filemenu.Append(wx.ID_CLOSE, wx.EmptyString, " Close current file")
         closeItem.Enable(self.fileIsOpen)
+        downloadItem = filemenu.Append(wx.ID_ANY, "Download...", " Download your ratings from imdb.com")
         filemenu.AppendSeparator()
         settingsItem = filemenu.Append(wx.ID_ANY, "Settings...", " Edit settings")
         filemenu.AppendSeparator()
@@ -139,6 +179,7 @@ class MainWindow(wx.Frame):
         # set Menu events
         self.Bind(wx.EVT_MENU, self.OnOpen, openItem)
         self.Bind(wx.EVT_MENU, self.OnClose, closeItem)
+        self.Bind(wx.EVT_MENU, self.OnDownload, downloadItem)
         self.Bind(wx.EVT_MENU, self.OnSettings, settingsItem)
         self.Bind(wx.EVT_MENU, self.OnQuit, exitItem)
         self.Bind(wx.EVT_MENU, self.OnSetSelectionMovies, setMovieItem)
@@ -234,6 +275,10 @@ class MainWindow(wx.Frame):
         self.titlesToShow = []
         self.customList = []
         self.updateListView(True)
+
+    def OnDownload(self,event):
+        # create dialog
+        downloadDialog(self, "Download Ratings", self.userId)
 
     def OnSettings(self, event):
         keys = [x for x in self.settingsOptions]
