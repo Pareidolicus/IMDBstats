@@ -248,13 +248,16 @@ class MainWindow(wx.Frame):
         """ Open a file """
         dlg = wx.FileDialog(self, "Choose a file", self.dirname, self.filename, "*.csv", wx.FD_OPEN)
         if dlg.ShowModal() == wx.ID_OK:
+            # if there is an opened file, close it first
+            if self.fileIsOpen:
+                self.OnClose()
             # open file
             self.filename = dlg.GetFilename()
             self.dirname = dlg.GetDirectory()
             self.openNewFile(self.dirname, self.filename)
         dlg.Destroy()
 
-    def OnClose(self, event):
+    def OnClose(self, event=None):
         """ Close current file """
         # set status info
         self.SetStatusText('File closed')
