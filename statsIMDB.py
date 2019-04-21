@@ -34,8 +34,6 @@ class downloadDialog(wx.Dialog):
         self.userIDTextCtrl.Bind(wx.EVT_TEXT, self.OnUserIdInput)
         self.downloadButton.Bind(wx.EVT_BUTTON, self.OnDownload)
 
-        self.Show()
-
     def OnUserIdInput(self, event):
         self.userId = self.userIDTextCtrl.GetValue()
         self.downloadButton.Enable(len(self.userId) > 0)
@@ -53,7 +51,7 @@ class MainWindow(wx.Frame):
         self.dirname = ''
         self.filename = ''
         self.configFileName = 'config.ini'
-        self.userId = 'ur13764044'
+        self.userId = ''
         self.fileIsOpen = False
         self.myTitles = movMng.MovieManagerClass()
         self.activeTitles = []
@@ -92,6 +90,8 @@ class MainWindow(wx.Frame):
         self.config.add_section('dirs')
         self.config.set('dirs', 'filename', '')
         self.config.set('dirs', 'dirname', '')
+        self.config.add_section('log')
+        self.config.set('log', 'userid', '')
         self.config.add_section('settings')
         for key in self.settingsOptions:
             self.config.set('settings', key, 'false')
@@ -114,10 +114,11 @@ class MainWindow(wx.Frame):
                 print('file ' + self.dirname + ' ' + self.filename + ' opened from config file')
 
     def loadSettings(self):
-        if not self.config.has_section('settings'):
-            return
-        for key in self.settingsOptions:
-            self.settingsSelection[key] = self.config.getboolean('settings', key)
+        if self.config.has_section('log'):
+            self.userId = self.config.get('log', 'userid')
+        if self.config.has_section('settings'):
+            for key in self.settingsOptions:
+                self.settingsSelection[key] = self.config.getboolean('settings', key)
 
     def saveSettings(self):
         if not self.config.has_section('settings'):
@@ -281,7 +282,9 @@ class MainWindow(wx.Frame):
 
     def OnDownload(self,event):
         # create dialog
-        downloadDialog(self, "Download Ratings", self.userId)
+        dlg = downloadDialog(self, "Download Ratings", self.userId)
+        dlg.ShowModal()
+        self.userId = dlg.userId
 
     def OnSettings(self, event):
         keys = [x for x in self.settingsOptions]
@@ -405,6 +408,7 @@ class MainWindow(wx.Frame):
     def updateConfigFile(self):
         self.config.set('dirs', 'filename', self.filename)
         self.config.set('dirs', 'dirname', self.dirname)
+        self.config.set('log', 'userid', self.userId)
         self.saveSettings()
         try:
             with open(self.configFileName, 'w') as configfile:
