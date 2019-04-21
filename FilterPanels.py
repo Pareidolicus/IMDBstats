@@ -397,13 +397,18 @@ class MinMaxSpinCtrlPanel(wx.Panel):
         spinCtrlsSizer.Add((5, 0))
         spinCtrlsSizer.Add(staticMinText, 0, wx.EXPAND)
         spinCtrlsSizer.Add(self.spinCtrlMin, 0, wx.EXPAND)
-        spinCtrlsSizer.Add((5, 0))
+        spinCtrlsSizer.Add((10, 0))
         spinCtrlsSizer.Add(staticMaxText, 0, wx.EXPAND)
         spinCtrlsSizer.Add(self.spinCtrlMax, 0, wx.EXPAND)
         spinCtrlsSizer.Add((5, 0))
+
+        checkBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
+        checkBoxSizer.Add((5, 0))
+        checkBoxSizer.Add(self.checkBox, 0, wx.EXPAND)
+
         panelSizer = wx.BoxSizer(wx.VERTICAL)
-        panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
-        panelSizer.Add((0, 5))
+        panelSizer.Add(checkBoxSizer, 0, wx.ALIGN_LEFT)
+        panelSizer.Add((0, 10))
         panelSizer.Add(spinCtrlsSizer, 0, wx.ALIGN_CENTER)
         self.SetSizer(panelSizer)
 
@@ -525,8 +530,13 @@ class MinMaxDateCtrlPanel(wx.Panel):
         dateCtrlsSizer.Add(staticMaxText, 0, wx.EXPAND)
         dateCtrlsSizer.Add(self.dateCtrlMax, 0, wx.EXPAND)
         dateCtrlsSizer.Add((5, 0))
+
+        checkBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
+        checkBoxSizer.Add((5, 0))
+        checkBoxSizer.Add(self.checkBox, 0, wx.EXPAND)
+
         panelSizer = wx.BoxSizer(wx.VERTICAL)
-        panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
+        panelSizer.Add(checkBoxSizer, 0, wx.ALIGN_LEFT)
         panelSizer.Add((0, 5))
         panelSizer.Add(dateCtrlsSizer, 0, wx.ALIGN_CENTER)
         self.SetSizer(panelSizer)
@@ -634,11 +644,20 @@ class CheckListBoxPanel(wx.Panel):
         listBoxSizer.Add(self.checkListBox, 1, wx.EXPAND)
         listBoxSizer.Add((5, 0))
 
+        checkBoxSizer = wx.BoxSizer(wx.HORIZONTAL)
+        checkBoxSizer.Add((5, 0))
+        checkBoxSizer.Add(self.checkBox, 0, wx.EXPAND)
+
+        checkModeSizer = wx.BoxSizer(wx.HORIZONTAL)
+        checkModeSizer.Add(self.checkMode, 0, wx.EXPAND)
+        checkModeSizer.Add((5, 0))
+
         panelSizer = wx.BoxSizer(wx.VERTICAL)
-        panelSizer.Add(self.checkBox, 0, wx.ALIGN_LEFT)
+        panelSizer.Add(checkBoxSizer, 0, wx.ALIGN_LEFT)
         panelSizer.Add((0, 5))
         panelSizer.Add(listBoxSizer, 0, wx.EXPAND)
-        panelSizer.Add(self.checkMode, 0, wx.EXPAND)
+        panelSizer.Add((0, 5))
+        panelSizer.Add(checkModeSizer, 0, wx.ALIGN_RIGHT)
         self.SetSizer(panelSizer)
 
         # events
