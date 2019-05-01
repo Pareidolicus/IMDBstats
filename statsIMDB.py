@@ -131,8 +131,9 @@ class MainWindow(wx.Frame):
         self.filterPanel = fPnls.MainFilterPanel(self)
         self.infoNb = wx.Notebook(self)
         self.mainListPanel = infoPnls.ListPanel(self.infoNb)
+        self.mainGraphPanel = infoPnls.GraphPanel(self.infoNb)
         self.infoNb.AddPage(self.mainListPanel, "List")
-        #self.infoNb.AddPage(wx.Panel(self.infoNb), "Graphs")
+        self.infoNb.AddPage(self.mainGraphPanel, "Graphs")
 
         # set Control events
         self.Bind(wx.EVT_BUTTON, self.OnButton)
@@ -280,7 +281,7 @@ class MainWindow(wx.Frame):
         self.customList = []
         self.updateListView(True)
 
-    def OnDownload(self,event):
+    def OnDownload(self, event):
         # create dialog
         dlg = downloadDialog(self, "Download Ratings", self.userId)
         dlg.ShowModal()

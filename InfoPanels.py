@@ -1,6 +1,7 @@
 import wx
 import wx.adv
 from ObjectListView import ObjectListView, ColumnDefn
+from wx.lib import plot as wxplot
 
 
 class ListPanel(wx.Panel):
@@ -178,3 +179,90 @@ class ObjectListClass(ObjectListView):
         self.SetObjects(activeTitles)
 
 
+class GraphPanel(wx.Panel):
+    def __init__(self, parent):
+        super(GraphPanel, self).__init__(parent)
+
+        # attribures
+
+        # controls
+        self.graphSelector = graphSelectorPanel(self)
+        self.statGraph = wxplot.PlotCanvas(self)
+
+        # Generate some Data
+        # x_data = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        #         # y_data = [2, 4, 6, 4, 2, 5, 6, 7, 1]
+        #         # xy_data = list(zip(x_data, y_data))
+        #         # line = wxplot.PolySpline(xy_data)
+        #         # graphics = wxplot.PlotGraphics([line])
+        #         # self.statGraph.Draw(graphics)
+
+        # sizers
+        graphPanelSizer = wx.BoxSizer(wx.VERTICAL)
+        graphPanelSizer.Add((0, 5))
+        graphPanelSizer.Add(self.graphSelector, 0, wx.EXPAND)
+        graphPanelSizer.Add((0, 5))
+        graphPanelSizer.Add(self.statGraph, 1, wx.EXPAND)
+        self.SetSizer(graphPanelSizer)
+
+        # events
+
+
+class graphSelectorPanel(wx.Panel):
+    """
+        Panel for selection of graph variables
+    """
+    def __init__(self, parent):
+        super(graphSelectorPanel, self).__init__(parent)
+
+        # attribures
+        self.singleVariable = ''
+        self.singleOption = ''
+
+        # parameters
+        fieldList = ['Your Rating', 'IMDb Rating', 'Runtime (mins)',
+                     'Release Date', 'Date Rated', 'Genres', 'Directors']
+        self.dateGraphOption = ['Year', 'Month']
+        self.directorsGraphOption = ['<10', '<20', '<50', 'All']
+
+        # controls
+        self.graphSelectorText = wx.StaticText(self, -1, "Single graph variable")
+        self.singleSelectorCtrl = wx.Choice(self, choices=fieldList)
+        self.graphOptionText = wx.StaticText(self, -1, "Options")
+        self.singleOptionCtrl = wx.Choice(self, choices=[])
+        self.singleOptionCtrl.Disable()
+        self.drawButton = wx.Button(self, -1, label="Draw!", size=wx.Size(-1, -1))
+
+        # sizers
+        graphSelectorSizer = wx.BoxSizer(wx.VERTICAL)
+        graphSelectorSizer.Add(self.graphSelectorText, 0, wx.ALIGN_LEFT)
+        graphSelectorSizer.Add((0, 5))
+        graphSelectorSizer.Add(self.singleSelectorCtrl, 0, wx.ALIGN_LEFT)
+        graphSelectorSizer.Add((0, 10))
+        graphSelectorSizer.Add(self.graphOptionText, 0, wx.ALIGN_LEFT)
+        graphSelectorSizer.Add((0, 5))
+        graphSelectorSizer.Add(self.singleOptionCtrl, 0, wx.ALIGN_LEFT)
+        graphSelectorSizer.Add((0, 10))
+        graphSelectorSizer.Add(self.drawButton, 0, wx.ALIGN_LEFT)
+        self.SetSizer(graphSelectorSizer)
+
+        # events
+        self.singleSelectorCtrl.Bind(wx.EVT_CHOICE, self.OnSingleSelectorCtrl)
+        self.singleOptionCtrl.Bind(wx.EVT_CHOICE, self.OnSingleOptionCtrl)
+
+    def OnSingleSelectorCtrl(self, event):
+        self.singleVariable = self.singleSelectorCtrl.GetStringSelection()
+        if self.singleVariable in {'Release Date', 'Date Rated'}:
+            self.singleOptionCtrl.Enable()
+            self.singleOptionCtrl.Set(self.dateGraphOption)
+            self.singleOptionCtrl.SetSelection(0)
+        elif self.singleVariable == 'Directors':
+            self.singleOptionCtrl.Enable()
+            self.singleOptionCtrl.Set(self.directorsGraphOption)
+            self.singleOptionCtrl.SetSelection(0)
+        else:
+            self.singleOptionCtrl.Clear()
+            self.singleOptionCtrl.Disable()
+
+    def OnSingleOptionCtrl(self, event):
+        self.singleOption = self.singleOptionCtrl.GetStringSelection()
