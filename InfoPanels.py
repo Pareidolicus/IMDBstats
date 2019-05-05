@@ -184,18 +184,12 @@ class GraphPanel(wx.Panel):
         super(GraphPanel, self).__init__(parent)
 
         # attribures
+        self.selectedSingleVariable = ''
+        self.selectedSingleOption = ''
 
         # controls
         self.graphSelector = graphSelectorPanel(self)
         self.statGraph = wxplot.PlotCanvas(self)
-
-        # Generate some Data
-        # x_data = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-        #         # y_data = [2, 4, 6, 4, 2, 5, 6, 7, 1]
-        #         # xy_data = list(zip(x_data, y_data))
-        #         # line = wxplot.PolySpline(xy_data)
-        #         # graphics = wxplot.PlotGraphics([line])
-        #         # self.statGraph.Draw(graphics)
 
         # sizers
         graphPanelSizer = wx.BoxSizer(wx.VERTICAL)
@@ -206,6 +200,20 @@ class GraphPanel(wx.Panel):
         self.SetSizer(graphPanelSizer)
 
         # events
+        self.graphSelector.drawButton.Bind(wx.EVT_BUTTON, self.OnDrawButton)
+
+    def OnDrawButton(self, event):
+        self.selectedSingleVariable = self.graphSelector.singleVariable
+        self.selectedSingleOption = self.graphSelector.singleOption
+        event.Skip()
+
+    def drawHistogram(self, binData, histData):
+        self.statGraph.Clear()
+        if not binData or not histData:
+            return
+        hist = wxplot.PolyHistogram(histData, binData, edgewidth=5, fillcolour=wx.Colour('blue'))
+        graphics = wxplot.PlotGraphics([hist])
+        self.statGraph.Draw(graphics)
 
 
 class graphSelectorPanel(wx.Panel):
@@ -226,12 +234,13 @@ class graphSelectorPanel(wx.Panel):
         self.directorsGraphOption = ['<10', '<20', '<50', 'All']
 
         # controls
-        self.graphSelectorText = wx.StaticText(self, -1, "Single graph variable")
+        self.graphSelectorText = wx.StaticText(self, -1, "Single graph")
         self.singleSelectorCtrl = wx.Choice(self, choices=fieldList)
         self.graphOptionText = wx.StaticText(self, -1, "Options")
         self.singleOptionCtrl = wx.Choice(self, choices=[])
         self.singleOptionCtrl.Disable()
         self.drawButton = wx.Button(self, -1, label="Draw!", size=wx.Size(-1, -1))
+        self.drawButton.Disable()
 
         # sizers
         graphSelectorSizer = wx.BoxSizer(wx.VERTICAL)
@@ -263,6 +272,9 @@ class graphSelectorPanel(wx.Panel):
         else:
             self.singleOptionCtrl.Clear()
             self.singleOptionCtrl.Disable()
+        if self.singleVariable:
+            self.drawButton.Enable()
 
     def OnSingleOptionCtrl(self, event):
         self.singleOption = self.singleOptionCtrl.GetStringSelection()
+

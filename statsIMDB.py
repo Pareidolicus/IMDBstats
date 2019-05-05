@@ -225,6 +225,11 @@ class MainWindow(wx.Frame):
             itemId = self.GetMenuBar().FindMenuItem("Set", setName)
             self.GetMenuBar().Check(itemId, True)
             self.setSelectionUpdate(self.filterPanel.selectedSet)
+        elif label == 'Draw!':
+            field = self.mainGraphPanel.selectedSingleVariable
+            option = self.mainGraphPanel.selectedSingleOption
+            binData, histData = self.myTitles.getHistogramForFieldInActives(self.currentSet, field, option)
+            self.mainGraphPanel.drawHistogram(binData, histData)
 
     def showActiveList(self):
         self.setTitlesToShow()

@@ -3,6 +3,11 @@ import csv
 from copy import deepcopy
 
 
+def getBinData(minVal, maxVal, binSz):
+    numBins = int((maxVal - minVal) / binSz) + 1
+    return [minVal + (x - 0.5) * binSz for x in range(numBins + 1)]
+
+
 class MovieManagerClass(object):
     def __init__(self):
         self.meta = []
@@ -213,6 +218,40 @@ class MovieManagerClass(object):
 
     def maxValueForField(self, setName, field):
         return max(x[field] for x in self.allTitles[setName])
+
+    def getHistogramForFieldInActives(self, setName, field, option):
+
+        histData = []
+        binData = []
+
+        # values for this field and active titles
+        fieldData = [title[field] for title in self.allTitles[setName]
+                     if (title['Active'] and (title[field] is not None))]
+
+        if not fieldData:
+            return binData, histData
+
+        # binParams (minValue, maxValue and binSize) for this field.
+        binParams = []
+        if field == 'Your Rating':
+            binParams = [1, 10, 1]
+        elif field == 'IMDb Rating':
+            binParams = [0, 10, 0.1]
+        elif field == 'Runtime (mins)':
+            binParams = [min(fieldData), max(fieldData), 1]
+
+        histData = []
+        binData = []
+        if field in {'Your Rating', 'IMDb Rating', 'Runtime (mins)'}:
+            binData = getBinData(binParams[0],
+                                 binParams[1],
+                                 binParams[2])
+            histData = [0]*(len(binData) - 1)
+            for sample in fieldData:
+                ind = int((sample - binData[0])/binParams[2])
+                histData[ind] += 1
+
+        return binData, histData
 
 
 if __name__ == '__main__':
