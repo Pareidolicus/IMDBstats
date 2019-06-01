@@ -228,8 +228,8 @@ class MainWindow(wx.Frame):
         elif label == 'Draw!':
             field = self.mainGraphPanel.selectedSingleVariable
             option = self.mainGraphPanel.selectedSingleOption
-            binData, histData = self.myTitles.getHistogramForFieldInActives(self.currentSet, field, option)
-            self.mainGraphPanel.drawHistogram(binData, histData)
+            binData, histData, xTicks = self.myTitles.getHistogramForFieldInActives(self.currentSet, field, option)
+            self.mainGraphPanel.drawHistogram(binData, histData, xTicks)
 
     def showActiveList(self):
         self.setTitlesToShow()
@@ -318,7 +318,8 @@ class MainWindow(wx.Frame):
 
     def OnAbout(self, event):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
-        dlg = wx.MessageDialog(self, "About IMDBstats\n\nCompute statistics from your movies rated on IMDB.com\n\nCreated by Diego Ruiz\n\ngithub.com/Pareidolicus/IMDBstats", "About IMDB statistics", wx.OK)
+        dlg = wx.MessageDialog(self, "About IMDBstats\n\nCompute statistics from your movies rated on IMDB.com\n\nCreated by Diego Ruiz\n\ngithub.com/Pareidolicus/IMDBstats",
+                               "About IMDB statistics", wx.OK)
         dlg.ShowModal()  # Show it
         dlg.Destroy()  # finally destroy it when finished.
 
@@ -383,6 +384,7 @@ class MainWindow(wx.Frame):
     def setActiveTitles(self, custom=False):
         if custom:
             self.addSelectedItemsToCustomList()
+            self.myTitles.setActiveTitlesID(self.currentSet, self.customList)
             self.activeTitles = self.customList
         else:
             self.activeTitles = self.myTitles.getActiveTitlesID(self.currentSet)

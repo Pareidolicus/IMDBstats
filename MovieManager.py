@@ -119,6 +119,20 @@ class MovieManagerClass(object):
                     break
             title['Active'] = act
 
+    def setActiveTitlesID(self, setName, IDList):
+        """
+            Set active titles given list of their ID's (for customs lists).
+        :param setName: name of set
+        :param IDList: list of 'const' strings
+        :return:
+        """
+        for title in self.allTitles[setName]:
+            if title['Const'] in IDList:
+                title['Active'] = True
+            else:
+                title['Active'] = False
+        return
+
     def getActiveTitlesID(self, setName):
         """
             Return the list of ID's ('const' field) for actives titles and set 'setName'
@@ -223,35 +237,58 @@ class MovieManagerClass(object):
 
         histData = []
         binData = []
+        xTicks = []  # list of pairs (value, string) for x ticks
 
         # values for this field and active titles
         fieldData = [title[field] for title in self.allTitles[setName]
                      if (title['Active'] and (title[field] is not None))]
 
         if not fieldData:
-            return binData, histData
+            return binData, histData, xTicks
 
         # binParams (minValue, maxValue and binSize) for this field.
         binParams = []
         if field == 'Your Rating':
             binParams = [1, 10, 1]
         elif field == 'IMDb Rating':
-            binParams = [0, 10, 0.1]
+            binParams = [0.1, 10, 0.1]
         elif field == 'Runtime (mins)':
             binParams = [min(fieldData), max(fieldData), 1]
 
-        histData = []
-        binData = []
         if field in {'Your Rating', 'IMDb Rating', 'Runtime (mins)'}:
             binData = getBinData(binParams[0],
                                  binParams[1],
                                  binParams[2])
             histData = [0]*(len(binData) - 1)
+            # compute histogram
             for sample in fieldData:
                 ind = int((sample - binData[0])/binParams[2])
                 histData[ind] += 1
 
-        return binData, histData
+            # create xTicks
+            step = int(len(histData) / 20 + 0.5)
+            xTicksValues = [binParams[0] + (step*ind - 1)*binParams[2] for ind in range(int(len(histData)/step) + 1)]
+            xTicksLabels = [str(int(val)) for val in xTicksValues]
+            if field == 'IMDb Rating':
+                xTicksLabels = ['{:.1f}'.format(val) for val in xTicksValues]
+            xTicks = list(zip(xTicksValues, xTicksLabels))
+
+        elif field == 'Genres':
+            allGenresSet = set()
+            for titleGenres in fieldData:
+                allGenresSet |= titleGenres
+            tempDict = dict.fromkeys(allGenresSet, 0)
+            for genreSet in fieldData:
+                for genre in genreSet:
+                    tempDict[genre] += 1
+            sortedGenreList = sorted(tempDict.items(), key=lambda kv: kv[1], reverse=True)
+            binData = getBinData(1, len(sortedGenreList), 1)
+            histData = [genre[1] for genre in sortedGenreList]
+            xTicksValues = list(range(1, len(sortedGenreList) + 1))
+            xTicksLabels = [genre[0] for genre in sortedGenreList]
+            xTicks = list(zip(xTicksValues, xTicksLabels))
+
+        return binData, histData, xTicks
 
 
 if __name__ == '__main__':

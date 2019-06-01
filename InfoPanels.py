@@ -180,6 +180,9 @@ class ObjectListClass(ObjectListView):
 
 
 class GraphPanel(wx.Panel):
+    """
+        Class in info panel with all modules needed for ploting.
+    """
     def __init__(self, parent):
         super(GraphPanel, self).__init__(parent)
 
@@ -189,7 +192,7 @@ class GraphPanel(wx.Panel):
 
         # controls
         self.graphSelector = graphSelectorPanel(self)
-        self.statGraph = wxplot.PlotCanvas(self)
+        self.statGraph = plotPanel(self)
 
         # sizers
         graphPanelSizer = wx.BoxSizer(wx.VERTICAL)
@@ -207,13 +210,46 @@ class GraphPanel(wx.Panel):
         self.selectedSingleOption = self.graphSelector.singleOption
         event.Skip()
 
-    def drawHistogram(self, binData, histData):
+    def drawHistogram(self, binData, histData, xTicks):
         self.statGraph.Clear()
         if not binData or not histData:
             return
-        hist = wxplot.PolyHistogram(histData, binData, edgewidth=5, fillcolour=wx.Colour('blue'))
-        graphics = wxplot.PlotGraphics([hist])
-        self.statGraph.Draw(graphics)
+        hist = wxplot.PolyHistogram(histData, binData, fillcolour=wx.BLUE, edgecolour=wx.BLACK)
+        graphics = wxplot.PlotGraphics([hist], title=self.selectedSingleVariable + ' histogram',
+                                       xLabel=self.selectedSingleVariable, yLabel='count')
+
+        binSz = binData[1] - binData[0]
+        self.statGraph.setXticks(xTicks)
+        self.statGraph.Draw(graphics, (binData[0] - 0.5*binSz, binData[-1] + 0.5*binSz))
+
+
+class plotPanel(wxplot.PlotCanvas):
+    """
+        Class that overrides wxplot.PlotCanvas.
+    """
+    def __init__(self, parent):
+        super(plotPanel, self).__init__(parent)
+
+        self.xTicks = []
+
+    def setXticks(self, xTicks):
+        """
+            Sets the list of custom strings that will appear in x axis as labels,
+            and the values for the x-ticks
+        :param xTicks: List of pairs (value, label)
+        :return:
+        """
+        self.xSpec = len(xTicks)
+        self.xTicks = xTicks
+
+    def _xticks(self, *args):
+        """
+            This function allows set custom xticks.
+        """
+        ticks = wxplot.PlotCanvas._xticks(self, *args)
+        if not self.xTicks:
+            return ticks
+        return self.xTicks
 
 
 class graphSelectorPanel(wx.Panel):
