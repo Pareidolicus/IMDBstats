@@ -254,23 +254,30 @@ class MovieManagerClass(object):
             binParams = [0.1, 10, 0.1]
         elif field == 'Runtime (mins)':
             binParams = [min(fieldData), max(fieldData), 1]
+        elif field in {'Release Date', 'Date Rated'}:
+            values = [int(date.split('-')[0]) for date in fieldData]
+            if option == 'Month':
+                values = [(int(date.split('-')[0]) - 1900)*12 + int(date.split('-')[1]) - 1 for date in fieldData]
+            fieldData = values
+            binParams = [min(fieldData), max(fieldData), 1]
 
-        if field in {'Your Rating', 'IMDb Rating', 'Runtime (mins)'}:
+        if field in {'Your Rating', 'IMDb Rating', 'Runtime (mins)', 'Release Date', 'Date Rated'}:
             binData = getBinData(binParams[0],
                                  binParams[1],
                                  binParams[2])
-            histData = [0]*(len(binData) - 1)
             # compute histogram
+            histData = [0] * (len(binData) - 1)
             for sample in fieldData:
                 ind = int((sample - binData[0])/binParams[2])
                 histData[ind] += 1
-
             # create xTicks
-            step = int(len(histData) / 20 + 0.5)
+            step = int((len(histData) + 20) // 20)
             xTicksValues = [binParams[0] + (step*ind - 1)*binParams[2] for ind in range(int(len(histData)/step) + 1)]
             xTicksLabels = [str(int(val)) for val in xTicksValues]
             if field == 'IMDb Rating':
                 xTicksLabels = ['{:.1f}'.format(val) for val in xTicksValues]
+            elif field in {'Release Date', 'Date Rated'} and option == 'Month':
+                xTicksLabels = ['{:02d}/{:d}'.format(val % 12 + 1, val//12 + 1900) for val in xTicksValues]
             xTicks = list(zip(xTicksValues, xTicksLabels))
 
         elif field == 'Genres':

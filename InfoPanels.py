@@ -301,13 +301,16 @@ class graphSelectorPanel(wx.Panel):
             self.singleOptionCtrl.Enable()
             self.singleOptionCtrl.Set(self.dateGraphOption)
             self.singleOptionCtrl.SetSelection(0)
+            self.singleOption = self.dateGraphOption[0]
         elif self.singleVariable == 'Directors':
             self.singleOptionCtrl.Enable()
             self.singleOptionCtrl.Set(self.directorsGraphOption)
             self.singleOptionCtrl.SetSelection(0)
+            self.singleOption = self.directorsGraphOption[0]
         else:
             self.singleOptionCtrl.Clear()
             self.singleOptionCtrl.Disable()
+            self.singleOption = ''
         if self.singleVariable:
             self.drawButton.Enable()
 
