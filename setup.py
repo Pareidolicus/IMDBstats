@@ -8,12 +8,13 @@ target = Executable(
     base="Win32GUI",
 )
 
-includefiles = ["icons/", "config.ini"]
+includefiles = ["icons/"]
+additional_mods = ['numpy.core._methods', 'numpy.lib.format']
 
 setup(
     name="statsIMDB",
-    version="1.0",
+    version="2.0",
     description="IMDB movie statistics",
-    options={'build_exe': {'include_files': includefiles}},
+    options={'build_exe': {'include_files': includefiles, 'includes': additional_mods}},
     executables=[target]
 )
