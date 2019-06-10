@@ -280,19 +280,26 @@ class MovieManagerClass(object):
                 xTicksLabels = ['{:02d}/{:d}'.format(val % 12 + 1, val//12 + 1900) for val in xTicksValues]
             xTicks = list(zip(xTicksValues, xTicksLabels))
 
-        elif field == 'Genres':
-            allGenresSet = set()
-            for titleGenres in fieldData:
-                allGenresSet |= titleGenres
-            tempDict = dict.fromkeys(allGenresSet, 0)
-            for genreSet in fieldData:
-                for genre in genreSet:
-                    tempDict[genre] += 1
-            sortedGenreList = sorted(tempDict.items(), key=lambda kv: kv[1], reverse=True)
-            binData = getBinData(1, len(sortedGenreList), 1)
-            histData = [genre[1] for genre in sortedGenreList]
-            xTicksValues = list(range(1, len(sortedGenreList) + 1))
-            xTicksLabels = [genre[0] for genre in sortedGenreList]
+        elif field in {'Genres', 'Directors'}:
+            # create set with unique elements
+            allSet = set()
+            for titleItems in fieldData:
+                allSet |= titleItems
+            tempDict = dict.fromkeys(allSet, 0)
+            # create sorted histogram data
+            for sampleSet in fieldData:
+                for sample in sampleSet:
+                    tempDict[sample] += 1
+            sortedList = sorted(tempDict.items(), key=lambda kv: kv[1], reverse=True)
+            # set options
+            if option and option[0] == '<':
+                numElem = int(option[1:])
+                sortedList = sortedList[:numElem]
+
+            binData = getBinData(1, len(sortedList), 1)
+            histData = [genre[1] for genre in sortedList]
+            xTicksValues = list(range(1, len(sortedList) + 1))
+            xTicksLabels = [genre[0] for genre in sortedList]
             xTicks = list(zip(xTicksValues, xTicksLabels))
 
         return binData, histData, xTicks
