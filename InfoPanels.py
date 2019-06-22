@@ -220,7 +220,7 @@ class GraphPanel(wx.Panel):
 
         binSz = binData[1] - binData[0]
         self.statGraph.setXticks(xTicks)
-        self.statGraph.Draw(graphics, (binData[0] - 0.5*binSz, binData[-1] + 0.5*binSz))
+        self.statGraph.Draw(graphics, (binData[0] - 0.5*binSz, binData[-1] + 0.5*binSz), (0, max(histData)*1.05))
 
 
 class plotPanel(wxplot.PlotCanvas):
